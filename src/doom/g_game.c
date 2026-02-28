@@ -50,6 +50,10 @@
 
 #include "d_main.h"
 
+#ifdef DMCP
+#include "dmcp_integration.h"
+#endif
+
 #include "wi_stuff.h"
 #include "hu_stuff.h"
 #include "st_stuff.h"
@@ -1657,6 +1661,10 @@ void G_Ticker (void)
 	D_PageTicker (); 
 	break;
     }        
+
+#ifdef DMCP
+    DMCP_Tick();
+#endif
 } 
  
  

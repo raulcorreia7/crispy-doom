@@ -79,6 +79,10 @@
 
 #include "d_main.h"
 
+#ifdef DMCP
+#include "dmcp_integration.h"
+#endif
+
 #include "doom_icon.c"
 
 //
@@ -2444,6 +2448,10 @@ void D_DoomMain (void)
 	else
 	    D_StartTitle ();                // start up intro loop
     }
+
+#ifdef DMCP
+    DMCP_Init();
+#endif
 
     D_DoomLoop ();  // never returns
 }

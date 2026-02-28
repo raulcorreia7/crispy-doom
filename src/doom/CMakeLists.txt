@@ -83,6 +83,19 @@ add_library(doom STATIC
 
 target_include_directories(doom PRIVATE "../" "${CMAKE_CURRENT_BINARY_DIR}/../../")
 
+if(DMCP_ENABLE)
+    target_include_directories(doom PRIVATE
+        "${DMCP_ADAPTER_DIR}/include"
+        "${DMCP_ROOT}/include"
+        "${DMCP_ROOT}/build"
+        "${CMAKE_CURRENT_SOURCE_DIR}/.."      # src/ for doomdef.h, d_player.h, etc.
+        "${CMAKE_CURRENT_SOURCE_DIR}"         # src/doom/ for doom-specific headers
+        "${CMAKE_CURRENT_BINARY_DIR}/../.."   # build/ for config.h
+    )
+    file(GLOB DMCP_ADAPTER_SOURCES "${DMCP_ADAPTER_DIR}/src/*.c")
+    target_sources(doom PRIVATE ${DMCP_ADAPTER_SOURCES})
+endif()
+
 if (DEFINED EMSCRIPTEN)
     set(SDL_FLAGS "-s USE_SDL=2")
     if(ENABLE_SDL2_MIXER)
@@ -100,6 +113,14 @@ else()
         list(APPEND SDL_LINK_LIBS SDL2_net::SDL2_net)
     endif()
 endif()
+
+if(DMCP_ENABLE)
+    list(APPEND SDL_LINK_LIBS
+        "${DMCP_ROOT}/build/libdmcp_core.so"
+        "${DMCP_ROOT}/build/libdmcp_generic.so"
+    )
+endif()
+
 target_link_libraries(doom ${SDL_LINK_LIBS})
 set_target_properties(doom PROPERTIES COMPILE_FLAGS "${SDL_FLAGS}")
 set_target_properties(doom PROPERTIES LINK_FLAGS "${SDL_FLAGS}")

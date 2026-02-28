@@ -87,12 +87,14 @@ if(DMCP_ENABLE)
     target_include_directories(doom PRIVATE
         "${DMCP_ADAPTER_DIR}/include"
         "${DMCP_ROOT}/include"
+        "${DMCP_ROOT}/adapters/common/include"
         "${DMCP_ROOT}/build"
-        "${CMAKE_CURRENT_SOURCE_DIR}/.."      # src/ for doomdef.h, d_player.h, etc.
-        "${CMAKE_CURRENT_SOURCE_DIR}"         # src/doom/ for doom-specific headers
-        "${CMAKE_CURRENT_BINARY_DIR}/../.."   # build/ for config.h
+        "${CMAKE_CURRENT_SOURCE_DIR}/.."
+        "${CMAKE_CURRENT_SOURCE_DIR}"
+        "${CMAKE_CURRENT_BINARY_DIR}/../.."
     )
     file(GLOB DMCP_ADAPTER_SOURCES "${DMCP_ADAPTER_DIR}/src/*.c")
+    list(APPEND DMCP_ADAPTER_SOURCES "${DMCP_ROOT}/adapters/common/src/dmcp_hooks.c")
     target_sources(doom PRIVATE ${DMCP_ADAPTER_SOURCES})
 endif()
 

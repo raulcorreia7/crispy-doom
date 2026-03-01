@@ -31,6 +31,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: raulcorreia7/doom-mcp
+          ref: dev
           path: dmcp
 
       - name: Install Linux Dependencies
@@ -48,7 +49,7 @@ jobs:
 
       - name: Install Windows Dependencies
         if: matrix.os == 'windows-latest'
-        run: vcpkg install sdl2 sdl2-net sdl2-mixer libpng libsamplerate --triplet x64-windows
+        run: vcpkg install --triplet x64-windows
 
       - name: Pre-configure (for headers)
         shell: bash
@@ -76,7 +77,12 @@ jobs:
           if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
             ARGS="-DCMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
           fi
-          cmake -B build -DDMCP_ENABLE=ON -DDMCP_ROOT="$(pwd)/dmcp" -DCMAKE_BUILD_TYPE=Release $ARGS
+          cmake -B build \
+            -DDMCP_ENABLE=ON \
+            -DDMCP_ROOT="$(pwd)/dmcp" \
+            -DDMCP_ADAPTER_DIR="$(pwd)/dmcp/adapters/crispy-doom" \
+            -DCMAKE_BUILD_TYPE=Release \
+            $ARGS
 
       - name: Build
         shell: bash

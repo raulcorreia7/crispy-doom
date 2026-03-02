@@ -124,9 +124,8 @@ if(DMCP_ENABLE)
         )
     elseif(APPLE)
         list(APPEND SDL_LINK_LIBS
-            "${DMCP_ROOT}/build/libdmcp_core.a"
-            "${DMCP_ROOT}/build/libdmcp_generic.a"
-            "-lc++"
+            "${DMCP_ROOT}/build/libdmcp_core.dylib"
+            "${DMCP_ROOT}/build/libdmcp_generic.dylib"
         )
     else()
         list(APPEND SDL_LINK_LIBS

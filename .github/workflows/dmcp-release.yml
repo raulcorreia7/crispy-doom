@@ -69,22 +69,22 @@ jobs:
         shell: bash
         run: |
           cmake -S dmcp -B dmcp/build \
-            -DDMCP_BUILD_SHARED=OFF \
+            -DDMCP_BUILD_SHARED=ON \
             -DDMCP_BUILD_EXAMPLES=OFF \
             -DDMCP_BUILD_ADAPTER_FAKE=OFF \
             -DDMCP_BUILD_ADAPTER_ZDOOM=OFF \
             -DDMCP_BUILD_ADAPTER_CRISPY=OFF \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_CXX_COMPILER=clang++ \
-            -DCMAKE_C_COMPILER=clang
+            -DCMAKE_C_COMPILER=clang \
+            -DCMAKE_SHARED_LINKER_FLAGS="-Wl,-undefined,dynamic_lookup"
           cmake --build dmcp/build --config Release -j4
 
       - name: Build DMCP (Windows)
         if: matrix.os == 'windows-latest'
         shell: cmd
-        env:
-          VCPKG_TARGET_TRIPLET: x64-windows
         run: |
+          vcpkg install zlib:x64-windows sdl2:x64-windows
           cmake -S dmcp -B dmcp/build ^
             -DDMCP_BUILD_SHARED=ON ^
             -DDMCP_BUILD_EXAMPLES=OFF ^
@@ -93,7 +93,8 @@ jobs:
             -DDMCP_BUILD_ADAPTER_CRISPY=OFF ^
             -DCMAKE_BUILD_TYPE=Release ^
             -DCMAKE_TOOLCHAIN_FILE="%VCPKG_INSTALLATION_ROOT%\scripts\buildsystems\vcpkg.cmake" ^
-            -DVCPKG_TARGET_TRIPLET=x64-windows
+            -DVCPKG_TARGET_TRIPLET=x64-windows ^
+            -DCMAKE_PREFIX_PATH="%VCPKG_INSTALLATION_ROOT%\installed\x64-windows"
           cmake --build dmcp/build --config Release -j4
 
       - name: Configure with DMCP (Linux/macOS)
@@ -109,8 +110,6 @@ jobs:
       - name: Configure with DMCP (Windows)
         if: matrix.os == 'windows-latest'
         shell: cmd
-        env:
-          VCPKG_TARGET_TRIPLET: x64-windows
         run: |
           cmake -B build ^
             -DDMCP_ENABLE=ON ^
@@ -118,7 +117,8 @@ jobs:
             -DDMCP_ADAPTER_DIR="%CD%\dmcp\adapters\crispy-doom" ^
             -DCMAKE_BUILD_TYPE=Release ^
             -DCMAKE_TOOLCHAIN_FILE="%VCPKG_INSTALLATION_ROOT%\scripts\buildsystems\vcpkg.cmake" ^
-            -DVCPKG_TARGET_TRIPLET=x64-windows
+            -DVCPKG_TARGET_TRIPLET=x64-windows ^
+            -DCMAKE_PREFIX_PATH="%VCPKG_INSTALLATION_ROOT%\installed\x64-windows"
 
       - name: Build
         shell: bash
@@ -143,6 +143,7 @@ jobs:
           mkdir -p pkg
           cp build/src/crispy-doom pkg/
           cp dmcp/build/libdmcp_*.so pkg/ 2>/dev/null || true
+          cp dmcp/build/libdmcp_*.dylib pkg/ 2>/dev/null || true
           cp dmcp/scripts/go.sh pkg/ 2>/dev/null || true
           cp dmcp/scripts/download_wad.sh pkg/ 2>/dev/null || true
           chmod +x pkg/go.sh pkg/download_wad.sh 2>/dev/null || true

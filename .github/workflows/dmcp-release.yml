@@ -33,6 +33,7 @@ jobs:
           repository: raulcorreia7/doom-mcp
           ref: dev
           path: dmcp
+          submodules: recursive
 
       - name: Install Linux Dependencies
         if: matrix.os == 'ubuntu-latest'

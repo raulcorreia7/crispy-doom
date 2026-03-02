@@ -84,7 +84,7 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: cmd
         run: |
-          vcpkg install zlib:x64-windows sdl2:x64-windows
+          echo {"dependencies":["zlib","sdl2"]}> dmcp\vcpkg.json
           cmake -S dmcp -B dmcp/build ^
             -DDMCP_BUILD_SHARED=ON ^
             -DDMCP_BUILD_EXAMPLES=OFF ^
@@ -93,8 +93,7 @@ jobs:
             -DDMCP_BUILD_ADAPTER_CRISPY=OFF ^
             -DCMAKE_BUILD_TYPE=Release ^
             -DCMAKE_TOOLCHAIN_FILE="%VCPKG_INSTALLATION_ROOT%\scripts\buildsystems\vcpkg.cmake" ^
-            -DVCPKG_TARGET_TRIPLET=x64-windows ^
-            -DCMAKE_PREFIX_PATH="%VCPKG_INSTALLATION_ROOT%\installed\x64-windows"
+            -DVCPKG_TARGET_TRIPLET=x64-windows
           cmake --build dmcp/build --config Release -j4
 
       - name: Configure with DMCP (Linux/macOS)

@@ -5,6 +5,7 @@
     "sdl2-net",
     "libpng",
     "libsamplerate",
-    "fluidsynth"
+    "fluidsynth",
+    "zlib"
   ]
 }

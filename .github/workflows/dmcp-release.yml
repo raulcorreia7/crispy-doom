@@ -101,7 +101,7 @@ jobs:
             7z a ${{ matrix.asset_name }} pkg/*
           else
             cp build/src/crispy-doom pkg/
-            cp dmcp/build/libdmcp_*.so pkg/ 2>/dev/null || true
+            cp dmcp/build/libdmcp_*.so pkg/ 2>/dev/null || cp dmcp/build/libdmcp_*.dylib pkg/ 2>/dev/null || true
             cp dmcp/scripts/go.sh pkg/
             cp dmcp/scripts/download_wad.sh pkg/
             chmod +x pkg/go.sh pkg/download_wad.sh

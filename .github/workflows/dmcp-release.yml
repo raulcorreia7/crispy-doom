@@ -41,7 +41,7 @@ jobs:
           sudo apt-get install -y \
             build-essential cmake \
             libsdl2-dev libsdl2-net-dev libsdl2-mixer-dev \
-            libpng-dev libsamplerate0-dev
+            libpng-dev libsamplerate0-dev zlib1g-dev
 
       - name: Install macOS Dependencies
         if: matrix.os == 'macos-latest'
@@ -49,64 +49,100 @@ jobs:
 
       - name: Install Windows Dependencies
         if: matrix.os == 'windows-latest'
-        run: vcpkg install --triplet x64-windows
+        run: vcpkg install sdl2 sdl2-mixer sdl2-net libpng libsamplerate zlib --triplet x64-windows
 
-      - name: Pre-configure (for headers)
+      - name: Setup MSVC (Windows)
+        if: matrix.os == 'windows-latest'
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Build DMCP (Linux)
+        if: matrix.os == 'ubuntu-latest'
         shell: bash
         run: |
-          ARGS=""
-          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-            ARGS="-DCMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
-          fi
-          cmake -B build -DCMAKE_BUILD_TYPE=Release $ARGS
-
-      - name: Build DMCP
-        shell: bash
-        run: |
-          ARGS=""
-          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-            ARGS="-DCMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
-          fi
-          cmake -S dmcp -B dmcp/build -DDMCP_BUILD_SHARED=ON -DDMCP_BUILD_EXAMPLES=OFF -DCMAKE_BUILD_TYPE=Release $ARGS
+          cmake -S dmcp -B dmcp/build \
+            -DDMCP_BUILD_SHARED=ON \
+            -DDMCP_BUILD_EXAMPLES=OFF \
+            -DDMCP_BUILD_ADAPTER_FAKE=OFF \
+            -DDMCP_BUILD_ADAPTER_ZDOOM=OFF \
+            -DDMCP_BUILD_ADAPTER_CRISPY=OFF \
+            -DCMAKE_BUILD_TYPE=Release
           cmake --build dmcp/build --config Release -j4
 
-      - name: Configure with DMCP
+      - name: Build DMCP (macOS)
+        if: matrix.os == 'macos-latest'
         shell: bash
         run: |
-          ARGS=""
-          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-            ARGS="-DCMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
-          fi
+          cmake -S dmcp -B dmcp/build \
+            -DDMCP_BUILD_SHARED=OFF \
+            -DDMCP_BUILD_EXAMPLES=OFF \
+            -DDMCP_BUILD_ADAPTER_FAKE=OFF \
+            -DDMCP_BUILD_ADAPTER_ZDOOM=OFF \
+            -DDMCP_BUILD_ADAPTER_CRISPY=OFF \
+            -DCMAKE_BUILD_TYPE=Release
+          cmake --build dmcp/build --config Release -j4
+
+      - name: Build DMCP (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: bash
+        run: |
+          cmake -S dmcp -B dmcp/build \
+            -DDMCP_BUILD_SHARED=ON \
+            -DDMCP_BUILD_EXAMPLES=OFF \
+            -DDMCP_BUILD_ADAPTER_FAKE=OFF \
+            -DDMCP_BUILD_ADAPTER_ZDOOM=OFF \
+            -DDMCP_BUILD_ADAPTER_CRISPY=OFF \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+          cmake --build dmcp/build --config Release -j4
+
+      - name: Configure with DMCP (Linux/macOS)
+        if: matrix.os != 'windows-latest'
+        shell: bash
+        run: |
+          cmake -B build \
+            -DDMCP_ENABLE=ON \
+            -DDMCP_ROOT="$(pwd)/dmcp" \
+            -DDMCP_ADAPTER_DIR="$(pwd)/dmcp/adapters/crispy-doom" \
+            -DCMAKE_BUILD_TYPE=Release
+
+      - name: Configure with DMCP (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: bash
+        run: |
           cmake -B build \
             -DDMCP_ENABLE=ON \
             -DDMCP_ROOT="$(pwd)/dmcp" \
             -DDMCP_ADAPTER_DIR="$(pwd)/dmcp/adapters/crispy-doom" \
             -DCMAKE_BUILD_TYPE=Release \
-            $ARGS
+            -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
 
       - name: Build
         shell: bash
         run: cmake --build build --config Release -j4
 
-      - name: Package
+      - name: Package (Windows)
+        if: matrix.os == 'windows-latest'
         shell: bash
         run: |
           mkdir -p pkg
-          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-            cp build/src/Release/crispy-doom.exe pkg/
-            cp dmcp/build/Release/dmcp_*.dll pkg/ 2>/dev/null || cp dmcp/build/dmcp_*.dll pkg/ 2>/dev/null || true
-            cp build/src/Release/*.dll pkg/ 2>/dev/null || true
-            cp dmcp/scripts/go.bat pkg/
-            cp dmcp/scripts/download_wad.bat pkg/
-            7z a ${{ matrix.asset_name }} pkg/*
-          else
-            cp build/src/crispy-doom pkg/
-            cp dmcp/build/libdmcp_*.so pkg/ 2>/dev/null || cp dmcp/build/libdmcp_*.dylib pkg/ 2>/dev/null || true
-            cp dmcp/scripts/go.sh pkg/
-            cp dmcp/scripts/download_wad.sh pkg/
-            chmod +x pkg/go.sh pkg/download_wad.sh
-            tar -czf ${{ matrix.asset_name }} pkg/*
-          fi
+          cp build/src/Release/crispy-doom.exe pkg/
+          cp dmcp/build/Release/dmcp_*.dll pkg/ 2>/dev/null || cp dmcp/build/dmcp_*.dll pkg/ 2>/dev/null || true
+          cp build/src/Release/*.dll pkg/ 2>/dev/null || true
+          cp dmcp/scripts/go.bat pkg/ 2>/dev/null || true
+          cp dmcp/scripts/download_wad.bat pkg/ 2>/dev/null || true
+          7z a ${{ matrix.asset_name }} pkg/*
+
+      - name: Package (Linux/macOS)
+        if: matrix.os != 'windows-latest'
+        shell: bash
+        run: |
+          mkdir -p pkg
+          cp build/src/crispy-doom pkg/
+          cp dmcp/build/libdmcp_*.so pkg/ 2>/dev/null || true
+          cp dmcp/scripts/go.sh pkg/ 2>/dev/null || true
+          cp dmcp/scripts/download_wad.sh pkg/ 2>/dev/null || true
+          chmod +x pkg/go.sh pkg/download_wad.sh 2>/dev/null || true
+          tar -czf ${{ matrix.asset_name }} pkg/*
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4

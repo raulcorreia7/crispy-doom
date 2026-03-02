@@ -55,14 +55,29 @@ jobs:
         if: matrix.os == 'windows-latest'
         uses: ilammy/msvc-dev-cmd@v1
 
-      - name: Build DMCP (Linux/macOS)
-        if: matrix.os != 'windows-latest'
+      - name: Build DMCP (Linux)
+        if: matrix.os == 'ubuntu-latest'
         shell: bash
         run: |
           cmake -S dmcp -B dmcp/build \
             -DDMCP_BUILD_SHARED=ON \
             -DDMCP_BUILD_EXAMPLES=OFF \
-            -DDMCP_BUILD_FAKE_ADAPTER=OFF \
+            -DDMCP_BUILD_ADAPTER_FAKE=OFF \
+            -DDMCP_BUILD_ADAPTER_ZDOOM=OFF \
+            -DDMCP_BUILD_ADAPTER_CRISPY=OFF \
+            -DCMAKE_BUILD_TYPE=Release
+          cmake --build dmcp/build --config Release -j4
+
+      - name: Build DMCP (macOS)
+        if: matrix.os == 'macos-latest'
+        shell: bash
+        run: |
+          cmake -S dmcp -B dmcp/build \
+            -DDMCP_BUILD_SHARED=OFF \
+            -DDMCP_BUILD_EXAMPLES=OFF \
+            -DDMCP_BUILD_ADAPTER_FAKE=OFF \
+            -DDMCP_BUILD_ADAPTER_ZDOOM=OFF \
+            -DDMCP_BUILD_ADAPTER_CRISPY=OFF \
             -DCMAKE_BUILD_TYPE=Release
           cmake --build dmcp/build --config Release -j4
 
@@ -73,7 +88,9 @@ jobs:
           cmake -S dmcp -B dmcp/build \
             -DDMCP_BUILD_SHARED=ON \
             -DDMCP_BUILD_EXAMPLES=OFF \
-            -DDMCP_BUILD_FAKE_ADAPTER=OFF \
+            -DDMCP_BUILD_ADAPTER_FAKE=OFF \
+            -DDMCP_BUILD_ADAPTER_ZDOOM=OFF \
+            -DDMCP_BUILD_ADAPTER_CRISPY=OFF \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
           cmake --build dmcp/build --config Release -j4
@@ -122,7 +139,6 @@ jobs:
           mkdir -p pkg
           cp build/src/crispy-doom pkg/
           cp dmcp/build/libdmcp_*.so pkg/ 2>/dev/null || true
-          cp dmcp/build/libdmcp_*.dylib pkg/ 2>/dev/null || true
           cp dmcp/scripts/go.sh pkg/ 2>/dev/null || true
           cp dmcp/scripts/download_wad.sh pkg/ 2>/dev/null || true
           chmod +x pkg/go.sh pkg/download_wad.sh 2>/dev/null || true

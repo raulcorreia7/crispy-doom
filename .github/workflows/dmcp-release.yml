@@ -49,7 +49,7 @@ jobs:
 
       - name: Install Windows Dependencies
         if: matrix.os == 'windows-latest'
-        run: vcpkg install sdl2 sdl2-mixer sdl2-net libpng libsamplerate zlib --triplet x64-windows
+        run: vcpkg install --triplet x64-windows
 
       - name: Setup MSVC (Windows)
         if: matrix.os == 'windows-latest'

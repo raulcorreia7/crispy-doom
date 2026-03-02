@@ -6,6 +6,8 @@ on:
       - "master"
     tags:
       - "*"
+    tags-ignore:
+      - "dmcp-v*"
     paths-ignore:
       - "**.md"
   pull_request:

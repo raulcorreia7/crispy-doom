@@ -83,6 +83,21 @@ add_library(doom STATIC
 
 target_include_directories(doom PRIVATE "../" "${CMAKE_CURRENT_BINARY_DIR}/../../")
 
+if(DMCP_ENABLE)
+    target_include_directories(doom PRIVATE
+        "${DMCP_ADAPTER_DIR}/include"
+        "${DMCP_ROOT}/include"
+        "${DMCP_ROOT}/adapters/common/include"
+        "${DMCP_ROOT}/build"
+        "${CMAKE_CURRENT_SOURCE_DIR}/.."
+        "${CMAKE_CURRENT_SOURCE_DIR}"
+        "${CMAKE_CURRENT_BINARY_DIR}/../.."
+    )
+    file(GLOB DMCP_ADAPTER_SOURCES "${DMCP_ADAPTER_DIR}/src/*.c")
+    list(APPEND DMCP_ADAPTER_SOURCES "${DMCP_ROOT}/adapters/common/src/dmcp_hooks.c")
+    target_sources(doom PRIVATE ${DMCP_ADAPTER_SOURCES})
+endif()
+
 if (DEFINED EMSCRIPTEN)
     set(SDL_FLAGS "-s USE_SDL=2")
     if(ENABLE_SDL2_MIXER)
@@ -100,6 +115,26 @@ else()
         list(APPEND SDL_LINK_LIBS SDL2_net::SDL2_net)
     endif()
 endif()
+
+if(DMCP_ENABLE)
+    if(WIN32)
+        list(APPEND SDL_LINK_LIBS
+            "${DMCP_ROOT}/build/Release/dmcp_core.lib"
+            "${DMCP_ROOT}/build/Release/dmcp_generic.lib"
+        )
+    elseif(APPLE)
+        list(APPEND SDL_LINK_LIBS
+            "${DMCP_ROOT}/build/libdmcp_core.dylib"
+            "${DMCP_ROOT}/build/libdmcp_generic.dylib"
+        )
+    else()
+        list(APPEND SDL_LINK_LIBS
+            "${DMCP_ROOT}/build/libdmcp_core.so"
+            "${DMCP_ROOT}/build/libdmcp_generic.so"
+        )
+    endif()
+endif()
+
 target_link_libraries(doom ${SDL_LINK_LIBS})
 set_target_properties(doom PROPERTIES COMPILE_FLAGS "${SDL_FLAGS}")
 set_target_properties(doom PROPERTIES LINK_FLAGS "${SDL_FLAGS}")

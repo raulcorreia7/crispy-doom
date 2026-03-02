@@ -79,6 +79,10 @@
 
 #include "d_main.h"
 
+#ifdef DMCP
+#include "dmcp_integration.h"
+#endif
+
 #include "doom_icon.c"
 
 //
@@ -2444,6 +2448,13 @@ void D_DoomMain (void)
 	else
 	    D_StartTitle ();                // start up intro loop
     }
+
+#ifdef DMCP
+    dmcp_engine_config_t cfg = dmcp_engine_config_default();
+    int port = dmcp_engine_port_from_argv(myargc, myargv, "dmcp_port");
+    if (port > 0) cfg.port = port;
+    DMCP_Init(&cfg);
+#endif
 
     D_DoomLoop ();  // never returns
 }

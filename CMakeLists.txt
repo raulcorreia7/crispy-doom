@@ -57,6 +57,10 @@ endif()
 
 option(CRISPY_TRUECOLOR "True color rendering" OFF)
 
+option(DMCP_ENABLE "Enable DMCP (MCP protocol support)" OFF)
+set(DMCP_ROOT "" CACHE PATH "Path to DMCP SDK root directory")
+set(DMCP_ADAPTER_DIR "" CACHE PATH "Path to DMCP Crispy adapter directory")
+
 # Check for libsamplerate.
 find_package(SampleRate)
 if(SampleRate_FOUND)
@@ -76,6 +80,23 @@ if(FluidSynth_FOUND AND ENABLE_SDL2_MIXER)
 endif()
 
 find_package(m)
+
+if(DMCP_ENABLE)
+    if(NOT DMCP_ROOT AND NOT "$ENV{dmcp_DIR}" STREQUAL "")
+        set(DMCP_ROOT "$ENV{dmcp_DIR}")
+    endif()
+    if(NOT DMCP_ROOT)
+        message(FATAL_ERROR "DMCP_ENABLE=ON requires DMCP_ROOT to be set")
+    endif()
+    if(NOT DMCP_ADAPTER_DIR)
+        set(DMCP_ADAPTER_DIR "${DMCP_ROOT}/adapters/crispy-doom")
+    endif()
+    if(NOT EXISTS "${DMCP_ADAPTER_DIR}/include/dmcp_integration.h")
+        message(FATAL_ERROR "DMCP adapter not found at ${DMCP_ADAPTER_DIR}")
+    endif()
+    add_compile_definitions(DMCP=1)
+    message(STATUS "DMCP enabled: adapter at ${DMCP_ADAPTER_DIR}")
+endif()
 
 include(CheckSymbolExists)
 include(CheckIncludeFile)

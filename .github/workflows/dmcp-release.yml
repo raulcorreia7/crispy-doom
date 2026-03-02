@@ -1,0 +1,130 @@
+name: DMCP Release
+
+on:
+  push:
+    tags:
+      - 'dmcp-v*'
+
+jobs:
+  build:
+    name: Build ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact_name: crispy-doom-dmcp-linux
+            asset_name: crispy-doom-dmcp-linux.tar.gz
+          - os: macos-latest
+            artifact_name: crispy-doom-dmcp-macos
+            asset_name: crispy-doom-dmcp-macos.tar.gz
+          - os: windows-latest
+            artifact_name: crispy-doom-dmcp-windows
+            asset_name: crispy-doom-dmcp-windows.zip
+
+    steps:
+      - name: Checkout crispy-doom
+        uses: actions/checkout@v4
+
+      - name: Checkout DMCP
+        uses: actions/checkout@v4
+        with:
+          repository: raulcorreia7/doom-mcp
+          ref: dev
+          path: dmcp
+
+      - name: Install Linux Dependencies
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential cmake \
+            libsdl2-dev libsdl2-net-dev libsdl2-mixer-dev \
+            libpng-dev libsamplerate0-dev
+
+      - name: Install macOS Dependencies
+        if: matrix.os == 'macos-latest'
+        run: brew install sdl2 sdl2_net sdl2_mixer libpng libsamplerate
+
+      - name: Install Windows Dependencies
+        if: matrix.os == 'windows-latest'
+        run: vcpkg install --triplet x64-windows
+
+      - name: Pre-configure (for headers)
+        shell: bash
+        run: |
+          ARGS=""
+          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            ARGS="-DCMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+          fi
+          cmake -B build -DCMAKE_BUILD_TYPE=Release $ARGS
+
+      - name: Build DMCP
+        shell: bash
+        run: |
+          ARGS=""
+          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            ARGS="-DCMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+          fi
+          cmake -S dmcp -B dmcp/build -DDMCP_BUILD_SHARED=ON -DDMCP_BUILD_EXAMPLES=OFF -DCMAKE_BUILD_TYPE=Release $ARGS
+          cmake --build dmcp/build --config Release -j4
+
+      - name: Configure with DMCP
+        shell: bash
+        run: |
+          ARGS=""
+          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            ARGS="-DCMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+          fi
+          cmake -B build \
+            -DDMCP_ENABLE=ON \
+            -DDMCP_ROOT="$(pwd)/dmcp" \
+            -DDMCP_ADAPTER_DIR="$(pwd)/dmcp/adapters/crispy-doom" \
+            -DCMAKE_BUILD_TYPE=Release \
+            $ARGS
+
+      - name: Build
+        shell: bash
+        run: cmake --build build --config Release -j4
+
+      - name: Package
+        shell: bash
+        run: |
+          mkdir -p pkg
+          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            cp build/src/Release/crispy-doom.exe pkg/
+            cp dmcp/build/Release/dmcp_*.dll pkg/ 2>/dev/null || cp dmcp/build/dmcp_*.dll pkg/ 2>/dev/null || true
+            cp build/src/Release/*.dll pkg/ 2>/dev/null || true
+            cp dmcp/scripts/go.bat pkg/
+            cp dmcp/scripts/download_wad.bat pkg/
+            7z a ${{ matrix.asset_name }} pkg/*
+          else
+            cp build/src/crispy-doom pkg/
+            cp dmcp/build/libdmcp_*.so pkg/ 2>/dev/null || cp dmcp/build/libdmcp_*.dylib pkg/ 2>/dev/null || true
+            cp dmcp/scripts/go.sh pkg/
+            cp dmcp/scripts/download_wad.sh pkg/
+            chmod +x pkg/go.sh pkg/download_wad.sh
+            tar -czf ${{ matrix.asset_name }} pkg/*
+          fi
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: ${{ matrix.asset_name }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+      - uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            */*.tar.gz
+            */*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

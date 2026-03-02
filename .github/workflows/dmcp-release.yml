@@ -84,7 +84,7 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: cmd
         run: |
-          echo {"dependencies":["zlib","sdl2"]}> dmcp\vcpkg.json
+          echo {"dependencies":["zlib","sdl2","libuv"]}> dmcp\vcpkg.json
           cmake -S dmcp -B dmcp/build ^
             -DDMCP_BUILD_SHARED=ON ^
             -DDMCP_BUILD_EXAMPLES=OFF ^

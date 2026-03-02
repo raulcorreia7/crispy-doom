@@ -126,8 +126,8 @@ if(DMCP_ENABLE)
         list(APPEND SDL_LINK_LIBS
             "${DMCP_ROOT}/build/libdmcp_core.a"
             "${DMCP_ROOT}/build/libdmcp_generic.a"
+            "-lc++"
         )
-        list(APPEND SDL_LINK_LIBS "c++")
     else()
         list(APPEND SDL_LINK_LIBS
             "${DMCP_ROOT}/build/libdmcp_core.so"

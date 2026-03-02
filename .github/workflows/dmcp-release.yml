@@ -47,10 +47,6 @@ jobs:
         if: matrix.os == 'macos-latest'
         run: brew install sdl2 sdl2_net sdl2_mixer libpng libsamplerate
 
-      - name: Install Windows Dependencies
-        if: matrix.os == 'windows-latest'
-        run: vcpkg install --triplet x64-windows
-
       - name: Setup MSVC (Windows)
         if: matrix.os == 'windows-latest'
         uses: ilammy/msvc-dev-cmd@v1
@@ -78,21 +74,26 @@ jobs:
             -DDMCP_BUILD_ADAPTER_FAKE=OFF \
             -DDMCP_BUILD_ADAPTER_ZDOOM=OFF \
             -DDMCP_BUILD_ADAPTER_CRISPY=OFF \
-            -DCMAKE_BUILD_TYPE=Release
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_CXX_COMPILER=clang++ \
+            -DCMAKE_C_COMPILER=clang
           cmake --build dmcp/build --config Release -j4
 
       - name: Build DMCP (Windows)
         if: matrix.os == 'windows-latest'
-        shell: bash
+        shell: cmd
+        env:
+          VCPKG_TARGET_TRIPLET: x64-windows
         run: |
-          cmake -S dmcp -B dmcp/build \
-            -DDMCP_BUILD_SHARED=ON \
-            -DDMCP_BUILD_EXAMPLES=OFF \
-            -DDMCP_BUILD_ADAPTER_FAKE=OFF \
-            -DDMCP_BUILD_ADAPTER_ZDOOM=OFF \
-            -DDMCP_BUILD_ADAPTER_CRISPY=OFF \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+          cmake -S dmcp -B dmcp/build ^
+            -DDMCP_BUILD_SHARED=ON ^
+            -DDMCP_BUILD_EXAMPLES=OFF ^
+            -DDMCP_BUILD_ADAPTER_FAKE=OFF ^
+            -DDMCP_BUILD_ADAPTER_ZDOOM=OFF ^
+            -DDMCP_BUILD_ADAPTER_CRISPY=OFF ^
+            -DCMAKE_BUILD_TYPE=Release ^
+            -DCMAKE_TOOLCHAIN_FILE="%VCPKG_INSTALLATION_ROOT%\scripts\buildsystems\vcpkg.cmake" ^
+            -DVCPKG_TARGET_TRIPLET=x64-windows
           cmake --build dmcp/build --config Release -j4
 
       - name: Configure with DMCP (Linux/macOS)
@@ -107,14 +108,17 @@ jobs:
 
       - name: Configure with DMCP (Windows)
         if: matrix.os == 'windows-latest'
-        shell: bash
+        shell: cmd
+        env:
+          VCPKG_TARGET_TRIPLET: x64-windows
         run: |
-          cmake -B build \
-            -DDMCP_ENABLE=ON \
-            -DDMCP_ROOT="$(pwd)/dmcp" \
-            -DDMCP_ADAPTER_DIR="$(pwd)/dmcp/adapters/crispy-doom" \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+          cmake -B build ^
+            -DDMCP_ENABLE=ON ^
+            -DDMCP_ROOT="%CD%\dmcp" ^
+            -DDMCP_ADAPTER_DIR="%CD%\dmcp\adapters\crispy-doom" ^
+            -DCMAKE_BUILD_TYPE=Release ^
+            -DCMAKE_TOOLCHAIN_FILE="%VCPKG_INSTALLATION_ROOT%\scripts\buildsystems\vcpkg.cmake" ^
+            -DVCPKG_TARGET_TRIPLET=x64-windows
 
       - name: Build
         shell: bash

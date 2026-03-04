@@ -27,7 +27,9 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: raulcorreia7/doom-mcp
-          ref: dev
+          # Pin to a known-good upstream commit for reproducible releases.
+          # Update this SHA only after matrix validation passes on CI.
+          ref: 31c79c4cd813abeeb4de1db7d69a9ef2d8165896
           path: dmcp
           submodules: recursive
 

@@ -41,7 +41,8 @@ jobs:
           submodules: recursive
 
       - name: Restore DMCP build cache
-        uses: actions/cache@v4
+        id: cache-dmcp
+        uses: actions/cache/restore@v4
         with:
           path: |
             dmcp/.cache
@@ -51,8 +52,9 @@ jobs:
             dmcp-build-${{ runner.os }}-
 
       - name: Restore vcpkg binary cache (Windows)
-        if: always() && matrix.os == 'windows-latest'
-        uses: actions/cache@v4
+        id: cache-vcpkg-archives
+        if: matrix.os == 'windows-latest'
+        uses: actions/cache/restore@v4
         with:
           path: C:\Users\runneradmin\AppData\Local\vcpkg\archives
           key: vcpkg-archives-${{ runner.os }}-${{ hashFiles('vcpkg.json', 'dmcp/vcpkg.json') }}
@@ -60,8 +62,9 @@ jobs:
             vcpkg-archives-${{ runner.os }}-
 
       - name: Restore vcpkg downloads cache (Windows)
-        if: always() && matrix.os == 'windows-latest'
-        uses: actions/cache@v4
+        id: cache-vcpkg-downloads
+        if: matrix.os == 'windows-latest'
+        uses: actions/cache/restore@v4
         with:
           path: C:\vcpkg\downloads
           key: vcpkg-downloads-${{ runner.os }}-v1
@@ -122,7 +125,6 @@ jobs:
         run: |
           echo {"dependencies":["zlib","libuv"]}> dmcp\vcpkg.json
           cmake -S dmcp -B dmcp/build ^
-            -T ClangCL ^
             -DDMCP_BUILD_SHARED=ON ^
             -DDMCP_BUILD_EXAMPLES=OFF ^
             -DDMCP_BUILD_ADAPTER_FAKE=OFF ^
@@ -134,6 +136,29 @@ jobs:
             -DVCPKG_TARGET_TRIPLET=x64-windows ^
             -DCMAKE_PREFIX_PATH="%CD%\dmcp\build\vcpkg_installed\x64-windows"
           cmake --build dmcp/build --config Release --parallel --target core
+
+      - name: Save DMCP build cache
+        if: always() && steps.cache-dmcp.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            dmcp/.cache
+            dmcp/build/vcpkg_installed
+          key: ${{ steps.cache-dmcp.outputs.cache-primary-key }}
+
+      - name: Save vcpkg binary cache (Windows)
+        if: always() && matrix.os == 'windows-latest' && steps.cache-vcpkg-archives.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: C:\Users\runneradmin\AppData\Local\vcpkg\archives
+          key: ${{ steps.cache-vcpkg-archives.outputs.cache-primary-key }}
+
+      - name: Save vcpkg downloads cache (Windows)
+        if: always() && matrix.os == 'windows-latest' && steps.cache-vcpkg-downloads.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: C:\vcpkg\downloads
+          key: ${{ steps.cache-vcpkg-downloads.outputs.cache-primary-key }}
 
       - name: Configure with DMCP (Linux/macOS)
         if: matrix.os != 'windows-latest'
@@ -152,7 +177,6 @@ jobs:
           VCPKG_FORCE_SYSTEM_BINARIES: 1
         run: |
           cmake -B build ^
-            -T ClangCL ^
             -DDMCP_ENABLE=ON ^
             -DDMCP_ROOT="%CD%\dmcp" ^
             -DDMCP_ADAPTER_DIR="%CD%\dmcp\adapters\crispy-doom" ^
@@ -173,7 +197,7 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: cmd
         run: |
-          set CL=/FS /MP1
+          set CL=/FS
           cmake --build build --config Release --parallel
           if errorlevel 1 (
             echo First build attempt failed, retrying once...

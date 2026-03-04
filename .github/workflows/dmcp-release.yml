@@ -27,7 +27,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: raulcorreia7/doom-mcp
-          ref: v0.6.0
+          ref: dev
           path: dmcp
           submodules: recursive
 
@@ -37,10 +37,9 @@ jobs:
         with:
           path: |
             dmcp/.cache
-            dmcp/build/vcpkg_installed
-          key: dmcp-build-${{ runner.os }}-v3-${{ hashFiles('dmcp/CMakeLists.txt', 'dmcp/cmake/CPM.cmake', 'dmcp/src/mcp/server.cpp') }}
+          key: dmcp-build-${{ runner.os }}-v4-${{ hashFiles('dmcp/CMakeLists.txt', 'dmcp/cmake/CPM.cmake', 'dmcp/src/mcp/server.cpp') }}
           restore-keys: |
-            dmcp-build-${{ runner.os }}-v3-
+            dmcp-build-${{ runner.os }}-v4-
             dmcp-build-${{ runner.os }}-
 
       - name: Restore vcpkg binary cache (Windows)
@@ -49,7 +48,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: C:\Users\runneradmin\AppData\Local\vcpkg\archives
-          key: vcpkg-archives-${{ runner.os }}-${{ hashFiles('vcpkg.json', 'dmcp/vcpkg.json') }}
+          key: vcpkg-archives-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
           restore-keys: |
             vcpkg-archives-${{ runner.os }}-
 
@@ -119,7 +118,7 @@ jobs:
             -DDMCP_BUILD_ADAPTER_ZDOOM=OFF \
             -DDMCP_BUILD_ADAPTER_CRISPY=OFF \
             -DCMAKE_BUILD_TYPE=Release
-          cmake --build dmcp/build --config Release --parallel --target core
+          cmake --build dmcp/build --config Release --parallel --target dmcp
 
       - name: Build DMCP (macOS)
         if: matrix.os == 'macos-latest'
@@ -133,17 +132,13 @@ jobs:
             -DDMCP_BUILD_ADAPTER_CRISPY=OFF \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_CXX_COMPILER=clang++ \
-            -DCMAKE_C_COMPILER=clang \
-            -DCMAKE_SHARED_LINKER_FLAGS="-Wl,-undefined,dynamic_lookup"
-          cmake --build dmcp/build --config Release --parallel --target core
+            -DCMAKE_C_COMPILER=clang
+          cmake --build dmcp/build --config Release --parallel --target dmcp
 
       - name: Build DMCP (Windows)
         if: matrix.os == 'windows-latest'
         shell: cmd
-        env:
-          VCPKG_FORCE_SYSTEM_BINARIES: 1
         run: |
-          echo {"dependencies":["zlib","libuv"]}> dmcp\vcpkg.json
           cmake -S dmcp -B dmcp/build ^
             -T ClangCL ^
             -DCMAKE_RC_COMPILER=llvm-rc ^
@@ -154,11 +149,8 @@ jobs:
             -DDMCP_BUILD_ADAPTER_CRISPY=OFF ^
             -DCMAKE_BUILD_TYPE=Release ^
             -DCMAKE_POLICY_DEFAULT_CMP0141=NEW ^
-            -DCMAKE_MSVC_DEBUG_INFORMATION_FORMAT=Embedded ^
-            -DCMAKE_TOOLCHAIN_FILE="%VCPKG_INSTALLATION_ROOT%\scripts\buildsystems\vcpkg.cmake" ^
-            -DVCPKG_TARGET_TRIPLET=x64-windows ^
-            -DCMAKE_PREFIX_PATH="%CD%\dmcp\build\vcpkg_installed\x64-windows"
-          cmake --build dmcp/build --config Release --parallel --target core
+            -DCMAKE_MSVC_DEBUG_INFORMATION_FORMAT=Embedded
+          cmake --build dmcp/build --config Release --parallel --target dmcp
 
       - name: Save DMCP build cache
         if: always() && steps.cache-dmcp.outputs.cache-hit != 'true'
@@ -166,7 +158,6 @@ jobs:
         with:
           path: |
             dmcp/.cache
-            dmcp/build/vcpkg_installed
           key: ${{ steps.cache-dmcp.outputs.cache-primary-key }}
 
       - name: Save vcpkg binary cache (Windows)
@@ -212,7 +203,7 @@ jobs:
             -DCMAKE_CXX_FLAGS_RELEASE="/O2 /Ob2 /DNDEBUG /Z7" ^
             -DCMAKE_TOOLCHAIN_FILE="%VCPKG_INSTALLATION_ROOT%\scripts\buildsystems\vcpkg.cmake" ^
             -DVCPKG_TARGET_TRIPLET=x64-windows ^
-            -DCMAKE_PREFIX_PATH="%VCPKG_INSTALLATION_ROOT%\installed\x64-windows;%CD%\dmcp\build\vcpkg_installed\x64-windows"
+            -DCMAKE_PREFIX_PATH="%VCPKG_INSTALLATION_ROOT%\installed\x64-windows"
 
       - name: Build (Linux/macOS)
         if: matrix.os != 'windows-latest'
@@ -237,7 +228,6 @@ jobs:
           cp build/src/crispy-*.exe dist/ 2>/dev/null || cp build/src/Release/crispy-*.exe dist/
           cp dmcp/build/Release/dmcp.dll dist/ 2>/dev/null || cp dmcp/build/dmcp.dll dist/ 2>/dev/null || cp dmcp/build/Release/dmcp_core.dll dist/ 2>/dev/null || cp dmcp/build/dmcp_core.dll dist/ 2>/dev/null || true
           cp build/vcpkg_installed/x64-windows/bin/*.dll dist/ 2>/dev/null || true
-          cp dmcp/build/vcpkg_installed/x64-windows/bin/*.dll dist/ 2>/dev/null || true
           cp "$VCPKG_INSTALLATION_ROOT"/installed/x64-windows/bin/*.dll dist/ 2>/dev/null || true
           cp pkg/dmcp/go.bat dist/ 2>/dev/null || true
           cp pkg/dmcp/download_wad.bat dist/ 2>/dev/null || true

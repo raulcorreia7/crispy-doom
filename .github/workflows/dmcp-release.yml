@@ -31,6 +31,11 @@ jobs:
           path: dmcp
           submodules: recursive
 
+      - name: Normalize DMCP library basename
+        shell: bash
+        run: |
+          perl -0pi -e 's/OUTPUT_NAME dmcp_core/OUTPUT_NAME dmcp/g' dmcp/CMakeLists.txt
+
       - name: Restore DMCP build cache
         id: cache-dmcp
         uses: actions/cache/restore@v4
@@ -234,7 +239,7 @@ jobs:
         run: |
           mkdir -p dist
           cp build/src/crispy-*.exe dist/ 2>/dev/null || cp build/src/Release/crispy-*.exe dist/
-          cp dmcp/build/Release/dmcp_core.dll dist/ 2>/dev/null || cp dmcp/build/dmcp_core.dll dist/ 2>/dev/null || true
+          cp dmcp/build/Release/dmcp.dll dist/ 2>/dev/null || cp dmcp/build/dmcp.dll dist/ 2>/dev/null || cp dmcp/build/Release/dmcp_core.dll dist/ 2>/dev/null || cp dmcp/build/dmcp_core.dll dist/ 2>/dev/null || true
           cp build/vcpkg_installed/x64-windows/bin/*.dll dist/ 2>/dev/null || true
           cp dmcp/build/vcpkg_installed/x64-windows/bin/*.dll dist/ 2>/dev/null || true
           cp "$VCPKG_INSTALLATION_ROOT"/installed/x64-windows/bin/*.dll dist/ 2>/dev/null || true
@@ -248,8 +253,8 @@ jobs:
         run: |
           mkdir -p dist
           cp build/src/crispy-* dist/
-          cp dmcp/build/libdmcp_core.so dist/ 2>/dev/null || true
-          cp dmcp/build/libdmcp_core.dylib dist/ 2>/dev/null || true
+          cp dmcp/build/libdmcp.so dist/ 2>/dev/null || cp dmcp/build/libdmcp_core.so dist/ 2>/dev/null || true
+          cp dmcp/build/libdmcp.dylib dist/ 2>/dev/null || cp dmcp/build/libdmcp_core.dylib dist/ 2>/dev/null || true
           cp pkg/dmcp/go.sh dist/ 2>/dev/null || true
           cp pkg/dmcp/download_wad.sh dist/ 2>/dev/null || true
           chmod +x dist/go.sh dist/download_wad.sh 2>/dev/null || true

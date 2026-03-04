@@ -235,10 +235,11 @@ jobs:
           mkdir -p dist
           cp build/src/crispy-*.exe dist/ 2>/dev/null || cp build/src/Release/crispy-*.exe dist/
           cp dmcp/build/Release/dmcp_core.dll dist/ 2>/dev/null || cp dmcp/build/dmcp_core.dll dist/ 2>/dev/null || true
+          cp build/vcpkg_installed/x64-windows/bin/*.dll dist/ 2>/dev/null || true
           cp dmcp/build/vcpkg_installed/x64-windows/bin/*.dll dist/ 2>/dev/null || true
           cp "$VCPKG_INSTALLATION_ROOT"/installed/x64-windows/bin/*.dll dist/ 2>/dev/null || true
-          cp dmcp/scripts/go.bat dist/ 2>/dev/null || true
-          cp dmcp/scripts/download_wad.bat dist/ 2>/dev/null || true
+          cp pkg/dmcp/go.bat dist/ 2>/dev/null || true
+          cp pkg/dmcp/download_wad.bat dist/ 2>/dev/null || true
           7z a "${PACKAGE_FILENAME}" ./dist/*
 
       - name: Package (Linux/macOS)
@@ -249,8 +250,8 @@ jobs:
           cp build/src/crispy-* dist/
           cp dmcp/build/libdmcp_core.so dist/ 2>/dev/null || true
           cp dmcp/build/libdmcp_core.dylib dist/ 2>/dev/null || true
-          cp dmcp/scripts/go.sh dist/ 2>/dev/null || true
-          cp dmcp/scripts/download_wad.sh dist/ 2>/dev/null || true
+          cp pkg/dmcp/go.sh dist/ 2>/dev/null || true
+          cp pkg/dmcp/download_wad.sh dist/ 2>/dev/null || true
           chmod +x dist/go.sh dist/download_wad.sh 2>/dev/null || true
           tar -czf "${PACKAGE_FILENAME}" -C dist .
 

@@ -36,7 +36,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: raulcorreia7/doom-mcp
-          ref: ad51c8c4831db991f027cf51aa3ffafe81a64fcd
+          ref: ae3f677210e7e30d9c3905da1bb7274de78e8a0b
           path: dmcp
           submodules: recursive
 
@@ -49,6 +49,15 @@ jobs:
           key: dmcp-build-${{ runner.os }}-${{ hashFiles('dmcp/CMakeLists.txt', 'dmcp/cmake/CPM.cmake', 'dmcp/vcpkg.json') }}
           restore-keys: |
             dmcp-build-${{ runner.os }}-
+
+      - name: Restore vcpkg binary cache (Windows)
+        if: matrix.os == 'windows-latest'
+        uses: actions/cache@v4
+        with:
+          path: vcpkg-binary-cache
+          key: vcpkg-bin-${{ runner.os }}-${{ hashFiles('vcpkg.json', 'dmcp/vcpkg.json') }}
+          restore-keys: |
+            vcpkg-bin-${{ runner.os }}-
 
       - name: Install Linux Dependencies
         if: matrix.os == 'ubuntu-latest'
@@ -100,7 +109,9 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: cmd
         run: |
-          echo {"dependencies":["zlib","sdl2","libuv","openssl"]}> dmcp\vcpkg.json
+          set VCPKG_DEFAULT_BINARY_CACHE=%CD%\vcpkg-binary-cache
+          set VCPKG_BINARY_SOURCES=clear;files,%VCPKG_DEFAULT_BINARY_CACHE%,readwrite
+          echo {"dependencies":["zlib","libuv","openssl"]}> dmcp\vcpkg.json
           cmake -S dmcp -B dmcp/build -G "Ninja" ^
             -DDMCP_BUILD_SHARED=ON ^
             -DDMCP_BUILD_EXAMPLES=OFF ^
@@ -127,6 +138,8 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: cmd
         run: |
+          set VCPKG_DEFAULT_BINARY_CACHE=%CD%\vcpkg-binary-cache
+          set VCPKG_BINARY_SOURCES=clear;files,%VCPKG_DEFAULT_BINARY_CACHE%,readwrite
           cmake -B build -G "Ninja" ^
             -DDMCP_ENABLE=ON ^
             -DDMCP_ROOT="%CD%\dmcp" ^
@@ -146,7 +159,7 @@ jobs:
         run: |
           mkdir -p dist
           cp build/src/crispy-*.exe dist/ 2>/dev/null || cp build/src/Release/crispy-*.exe dist/
-          cp dmcp/build/Release/dmcp_*.dll dist/ 2>/dev/null || cp dmcp/build/dmcp_*.dll dist/ 2>/dev/null || true
+          cp dmcp/build/Release/dmcp_core.dll dist/ 2>/dev/null || cp dmcp/build/dmcp_core.dll dist/ 2>/dev/null || true
           cp dmcp/build/vcpkg_installed/x64-windows/bin/*.dll dist/ 2>/dev/null || true
           cp "$VCPKG_INSTALLATION_ROOT"/installed/x64-windows/bin/*.dll dist/ 2>/dev/null || true
           cp dmcp/scripts/go.bat dist/ 2>/dev/null || true
@@ -159,8 +172,8 @@ jobs:
         run: |
           mkdir -p dist
           cp build/src/crispy-* dist/
-          cp dmcp/build/libdmcp_*.so dist/ 2>/dev/null || true
-          cp dmcp/build/libdmcp_*.dylib dist/ 2>/dev/null || true
+          cp dmcp/build/libdmcp_core.so dist/ 2>/dev/null || true
+          cp dmcp/build/libdmcp_core.dylib dist/ 2>/dev/null || true
           cp dmcp/scripts/go.sh dist/ 2>/dev/null || true
           cp dmcp/scripts/download_wad.sh dist/ 2>/dev/null || true
           chmod +x dist/go.sh dist/download_wad.sh 2>/dev/null || true
@@ -171,6 +184,7 @@ jobs:
         with:
           name: ${{ matrix.artifact_name }}
           path: ${{ matrix.asset_name }}
+          compression-level: 0
 
   release:
     needs: build

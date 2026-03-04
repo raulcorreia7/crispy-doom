@@ -120,17 +120,14 @@ if(DMCP_ENABLE)
     if(WIN32)
         list(APPEND SDL_LINK_LIBS
             "${DMCP_ROOT}/build/Release/dmcp_core.lib"
-            "${DMCP_ROOT}/build/Release/dmcp_generic.lib"
         )
     elseif(APPLE)
         list(APPEND SDL_LINK_LIBS
             "${DMCP_ROOT}/build/libdmcp_core.dylib"
-            "${DMCP_ROOT}/build/libdmcp_generic.dylib"
         )
     else()
         list(APPEND SDL_LINK_LIBS
             "${DMCP_ROOT}/build/libdmcp_core.so"
-            "${DMCP_ROOT}/build/libdmcp_generic.so"
         )
     endif()
 endif()

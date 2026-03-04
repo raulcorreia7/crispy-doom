@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - "master"
-    tags:
-      - "*"
     tags-ignore:
       - "dmcp-v*"
     paths-ignore:

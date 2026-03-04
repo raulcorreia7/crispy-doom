@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - 'dmcp-v*'
+  workflow_dispatch:
 
 jobs:
   build:
@@ -95,6 +96,9 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release ^
             -DCMAKE_TOOLCHAIN_FILE="%VCPKG_INSTALLATION_ROOT%\scripts\buildsystems\vcpkg.cmake" ^
             -DVCPKG_TARGET_TRIPLET=x64-windows ^
+            -DCMAKE_C_FLAGS="/I%CD%\dmcp\build\vcpkg_installed\x64-windows\include" ^
+            -DCMAKE_CXX_FLAGS="/I%CD%\dmcp\build\vcpkg_installed\x64-windows\include" ^
+            -DCMAKE_SHARED_LINKER_FLAGS="/LIBPATH:%CD%\dmcp\build\vcpkg_installed\x64-windows\lib uv.lib" ^
             -DCMAKE_PREFIX_PATH="%CD%\dmcp\build\vcpkg_installed\x64-windows"
           cmake --build dmcp/build --config Release -j4
 
@@ -119,7 +123,7 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release ^
             -DCMAKE_TOOLCHAIN_FILE="%VCPKG_INSTALLATION_ROOT%\scripts\buildsystems\vcpkg.cmake" ^
             -DVCPKG_TARGET_TRIPLET=x64-windows ^
-            -DCMAKE_PREFIX_PATH="%VCPKG_INSTALLATION_ROOT%\installed\x64-windows"
+            -DCMAKE_PREFIX_PATH="%VCPKG_INSTALLATION_ROOT%\installed\x64-windows;%CD%\dmcp\build\vcpkg_installed\x64-windows"
 
       - name: Build
         shell: bash
@@ -129,26 +133,27 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: bash
         run: |
-          mkdir -p pkg
-          cp build/src/Release/crispy-doom.exe pkg/
-          cp dmcp/build/Release/dmcp_*.dll pkg/ 2>/dev/null || cp dmcp/build/dmcp_*.dll pkg/ 2>/dev/null || true
-          cp build/src/Release/*.dll pkg/ 2>/dev/null || true
-          cp dmcp/scripts/go.bat pkg/ 2>/dev/null || true
-          cp dmcp/scripts/download_wad.bat pkg/ 2>/dev/null || true
-          7z a ${{ matrix.asset_name }} pkg/*
+          mkdir -p dist
+          cp build/src/Release/crispy-*.exe dist/
+          cp dmcp/build/Release/dmcp_*.dll dist/ 2>/dev/null || cp dmcp/build/dmcp_*.dll dist/ 2>/dev/null || true
+          cp dmcp/build/vcpkg_installed/x64-windows/bin/*.dll dist/ 2>/dev/null || true
+          cp "$VCPKG_INSTALLATION_ROOT"/installed/x64-windows/bin/*.dll dist/ 2>/dev/null || true
+          cp dmcp/scripts/go.bat dist/ 2>/dev/null || true
+          cp dmcp/scripts/download_wad.bat dist/ 2>/dev/null || true
+          7z a "${{ matrix.asset_name }}" ./dist/*
 
       - name: Package (Linux/macOS)
         if: matrix.os != 'windows-latest'
         shell: bash
         run: |
-          mkdir -p pkg
-          cp build/src/crispy-doom pkg/
-          cp dmcp/build/libdmcp_*.so pkg/ 2>/dev/null || true
-          cp dmcp/build/libdmcp_*.dylib pkg/ 2>/dev/null || true
-          cp dmcp/scripts/go.sh pkg/ 2>/dev/null || true
-          cp dmcp/scripts/download_wad.sh pkg/ 2>/dev/null || true
-          chmod +x pkg/go.sh pkg/download_wad.sh 2>/dev/null || true
-          tar -czf ${{ matrix.asset_name }} pkg/*
+          mkdir -p dist
+          cp build/src/crispy-* dist/
+          cp dmcp/build/libdmcp_*.so dist/ 2>/dev/null || true
+          cp dmcp/build/libdmcp_*.dylib dist/ 2>/dev/null || true
+          cp dmcp/scripts/go.sh dist/ 2>/dev/null || true
+          cp dmcp/scripts/download_wad.sh dist/ 2>/dev/null || true
+          chmod +x dist/go.sh dist/download_wad.sh 2>/dev/null || true
+          tar -czf "${{ matrix.asset_name }}" -C dist .
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4

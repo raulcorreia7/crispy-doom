@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - "master"
-    tags:
-      - "*"
     tags-ignore:
       - "dmcp-v*"
     paths-ignore:
@@ -16,6 +14,10 @@ on:
     paths-ignore:
       - "**.md"
   workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -112,17 +114,22 @@ jobs:
         run: |
           ./autogen.sh
 
+      - name: Detect parallel jobs
+        run: |
+          JOBS="$(getconf _NPROCESSORS_ONLN 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || nproc 2>/dev/null || echo 2)"
+          echo "JOBS=${JOBS}" >> "$GITHUB_ENV"
+
       - name: Build true-color on Windows
         if: runner.os == 'Windows'
         run: |
           make distclean
           ./configure --enable-truecolor
-          make -j4
+          make -j"${JOBS}"
           for i in doom heretic hexen strife ; do mv src/crispy-${i}.exe src/crispy-${i}-truecolor.exe ; done
           make distclean
           ./configure
       - name: Build
-        run: make -j4
+        run: make -j"${JOBS}"
 
       - uses: actions/setup-python@v5
         with:
@@ -132,7 +139,7 @@ jobs:
         run: |
           pip install pyyaml
           PREFIX=`sed -n '/PROGRAM_PREFIX/p' ${PWD}/config.h | cut -d '"' -f 2`
-          make -j4 -C quickcheck check SOURCE_PORT=$PWD/src/${PREFIX}doom
+          make -j"${JOBS}" -C quickcheck check SOURCE_PORT=$PWD/src/${PREFIX}doom
 
       - name: Package
         if: ${{ matrix.config.artifacts }}

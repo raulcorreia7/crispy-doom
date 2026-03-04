@@ -4,6 +4,11 @@ on:
   push:
     tags:
       - 'dmcp-v*'
+  workflow_dispatch:
+
+concurrency:
+  group: dmcp-release-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -12,16 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - os: ubuntu-latest
-            artifact_name: crispy-doom-dmcp-linux
-            asset_name: crispy-doom-dmcp-linux.tar.gz
-          - os: macos-latest
-            artifact_name: crispy-doom-dmcp-macos
-            asset_name: crispy-doom-dmcp-macos.tar.gz
-          - os: windows-latest
-            artifact_name: crispy-doom-dmcp-windows
-            asset_name: crispy-doom-dmcp-windows.zip
+        os: [ubuntu-latest, macos-latest, windows-latest]
 
     steps:
       - name: Checkout crispy-doom
@@ -31,9 +27,42 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: raulcorreia7/doom-mcp
-          ref: dev
+          # Pin to a known-good upstream commit for reproducible releases.
+          # Update this SHA only after matrix validation passes on CI.
+          ref: 31c79c4cd813abeeb4de1db7d69a9ef2d8165896
           path: dmcp
           submodules: recursive
+
+      - name: Restore DMCP build cache
+        id: cache-dmcp
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            dmcp/.cache
+          key: dmcp-build-${{ runner.os }}-v4-${{ hashFiles('dmcp/CMakeLists.txt', 'dmcp/cmake/CPM.cmake', 'dmcp/src/mcp/server.cpp') }}
+          restore-keys: |
+            dmcp-build-${{ runner.os }}-v4-
+            dmcp-build-${{ runner.os }}-
+
+      - name: Restore vcpkg binary cache (Windows)
+        id: cache-vcpkg-archives
+        if: matrix.os == 'windows-latest'
+        uses: actions/cache/restore@v4
+        with:
+          path: C:\Users\runneradmin\AppData\Local\vcpkg\archives
+          key: vcpkg-archives-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
+          restore-keys: |
+            vcpkg-archives-${{ runner.os }}-
+
+      - name: Restore vcpkg downloads cache (Windows)
+        id: cache-vcpkg-downloads
+        if: matrix.os == 'windows-latest'
+        uses: actions/cache/restore@v4
+        with:
+          path: C:\vcpkg\downloads
+          key: vcpkg-downloads-${{ runner.os }}-v1
+          restore-keys: |
+            vcpkg-downloads-${{ runner.os }}-
 
       - name: Install Linux Dependencies
         if: matrix.os == 'ubuntu-latest'
@@ -52,6 +81,34 @@ jobs:
         if: matrix.os == 'windows-latest'
         uses: ilammy/msvc-dev-cmd@v1
 
+      - name: Compute package metadata
+        shell: bash
+        run: |
+          case "${RUNNER_OS}" in
+            Linux) os="linux" ;;
+            macOS) os="macos" ;;
+            Windows) os="windows" ;;
+            *)
+              echo "Unsupported RUNNER_OS=${RUNNER_OS}"
+              exit 1
+              ;;
+          esac
+
+          case "${RUNNER_ARCH}" in
+            X64) arch="x86_64" ;;
+            ARM64) arch="arm64" ;;
+            X86) arch="x86" ;;
+            *) arch="$(echo "${RUNNER_ARCH}" | tr '[:upper:]' '[:lower:]')" ;;
+          esac
+
+          ext="tar.gz"
+          if [ "${RUNNER_OS}" = "Windows" ]; then
+            ext="zip"
+          fi
+
+          echo "PACKAGE_BASENAME=crispy-doom-dmcp-${os}-${arch}" >> "$GITHUB_ENV"
+          echo "PACKAGE_FILENAME=crispy-doom-dmcp-${os}-${arch}.${ext}" >> "$GITHUB_ENV"
+
       - name: Build DMCP (Linux)
         if: matrix.os == 'ubuntu-latest'
         shell: bash
@@ -63,7 +120,7 @@ jobs:
             -DDMCP_BUILD_ADAPTER_ZDOOM=OFF \
             -DDMCP_BUILD_ADAPTER_CRISPY=OFF \
             -DCMAKE_BUILD_TYPE=Release
-          cmake --build dmcp/build --config Release -j4
+          cmake --build dmcp/build --config Release --parallel --target dmcp
 
       - name: Build DMCP (macOS)
         if: matrix.os == 'macos-latest'
@@ -77,25 +134,47 @@ jobs:
             -DDMCP_BUILD_ADAPTER_CRISPY=OFF \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_CXX_COMPILER=clang++ \
-            -DCMAKE_C_COMPILER=clang \
-            -DCMAKE_SHARED_LINKER_FLAGS="-Wl,-undefined,dynamic_lookup"
-          cmake --build dmcp/build --config Release -j4
+            -DCMAKE_C_COMPILER=clang
+          cmake --build dmcp/build --config Release --parallel --target dmcp
 
       - name: Build DMCP (Windows)
         if: matrix.os == 'windows-latest'
         shell: cmd
         run: |
-          echo {"dependencies":["zlib","sdl2","libuv"]}> dmcp\vcpkg.json
           cmake -S dmcp -B dmcp/build ^
+            -T ClangCL ^
+            -DCMAKE_RC_COMPILER=llvm-rc ^
             -DDMCP_BUILD_SHARED=ON ^
             -DDMCP_BUILD_EXAMPLES=OFF ^
             -DDMCP_BUILD_ADAPTER_FAKE=OFF ^
             -DDMCP_BUILD_ADAPTER_ZDOOM=OFF ^
             -DDMCP_BUILD_ADAPTER_CRISPY=OFF ^
             -DCMAKE_BUILD_TYPE=Release ^
-            -DCMAKE_TOOLCHAIN_FILE="%VCPKG_INSTALLATION_ROOT%\scripts\buildsystems\vcpkg.cmake" ^
-            -DVCPKG_TARGET_TRIPLET=x64-windows
-          cmake --build dmcp/build --config Release -j4
+            -DCMAKE_POLICY_DEFAULT_CMP0141=NEW ^
+            -DCMAKE_MSVC_DEBUG_INFORMATION_FORMAT=Embedded
+          cmake --build dmcp/build --config Release --parallel --target dmcp
+
+      - name: Save DMCP build cache
+        if: always() && steps.cache-dmcp.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            dmcp/.cache
+          key: ${{ steps.cache-dmcp.outputs.cache-primary-key }}
+
+      - name: Save vcpkg binary cache (Windows)
+        if: always() && matrix.os == 'windows-latest' && steps.cache-vcpkg-archives.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: C:\Users\runneradmin\AppData\Local\vcpkg\archives
+          key: ${{ steps.cache-vcpkg-archives.outputs.cache-primary-key }}
+
+      - name: Save vcpkg downloads cache (Windows)
+        if: always() && matrix.os == 'windows-latest' && steps.cache-vcpkg-downloads.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: C:\vcpkg\downloads
+          key: ${{ steps.cache-vcpkg-downloads.outputs.cache-primary-key }}
 
       - name: Configure with DMCP (Linux/macOS)
         if: matrix.os != 'windows-latest'
@@ -110,52 +189,74 @@ jobs:
       - name: Configure with DMCP (Windows)
         if: matrix.os == 'windows-latest'
         shell: cmd
+        env:
+          VCPKG_FORCE_SYSTEM_BINARIES: 1
         run: |
           cmake -B build ^
+            -T ClangCL ^
+            -DCMAKE_RC_COMPILER=llvm-rc ^
             -DDMCP_ENABLE=ON ^
             -DDMCP_ROOT="%CD%\dmcp" ^
             -DDMCP_ADAPTER_DIR="%CD%\dmcp\adapters\crispy-doom" ^
             -DCMAKE_BUILD_TYPE=Release ^
+            -DCMAKE_POLICY_DEFAULT_CMP0141=NEW ^
+            -DCMAKE_MSVC_DEBUG_INFORMATION_FORMAT=Embedded ^
+            -DCMAKE_C_FLAGS_RELEASE="/O2 /Ob2 /DNDEBUG /Z7" ^
+            -DCMAKE_CXX_FLAGS_RELEASE="/O2 /Ob2 /DNDEBUG /Z7" ^
             -DCMAKE_TOOLCHAIN_FILE="%VCPKG_INSTALLATION_ROOT%\scripts\buildsystems\vcpkg.cmake" ^
             -DVCPKG_TARGET_TRIPLET=x64-windows ^
             -DCMAKE_PREFIX_PATH="%VCPKG_INSTALLATION_ROOT%\installed\x64-windows"
 
-      - name: Build
+      - name: Build (Linux/macOS)
+        if: matrix.os != 'windows-latest'
         shell: bash
-        run: cmake --build build --config Release -j4
+        run: cmake --build build --config Release --parallel
+
+      - name: Build (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: cmd
+        run: |
+          cmake --build build --config Release --parallel
+          if errorlevel 1 (
+            echo First build attempt failed, retrying once...
+            cmake --build build --config Release --parallel
+          )
 
       - name: Package (Windows)
         if: matrix.os == 'windows-latest'
         shell: bash
         run: |
-          mkdir -p pkg
-          cp build/src/Release/crispy-doom.exe pkg/
-          cp dmcp/build/Release/dmcp_*.dll pkg/ 2>/dev/null || cp dmcp/build/dmcp_*.dll pkg/ 2>/dev/null || true
-          cp build/src/Release/*.dll pkg/ 2>/dev/null || true
-          cp dmcp/scripts/go.bat pkg/ 2>/dev/null || true
-          cp dmcp/scripts/download_wad.bat pkg/ 2>/dev/null || true
-          7z a ${{ matrix.asset_name }} pkg/*
+          mkdir -p dist
+          cp build/src/crispy-*.exe dist/ 2>/dev/null || cp build/src/Release/crispy-*.exe dist/
+          cp dmcp/build/Release/dmcp.dll dist/ 2>/dev/null || cp dmcp/build/dmcp.dll dist/ 2>/dev/null || cp dmcp/build/Release/dmcp_core.dll dist/ 2>/dev/null || cp dmcp/build/dmcp_core.dll dist/ 2>/dev/null || true
+          cp build/vcpkg_installed/x64-windows/bin/*.dll dist/ 2>/dev/null || true
+          cp "$VCPKG_INSTALLATION_ROOT"/installed/x64-windows/bin/*.dll dist/ 2>/dev/null || true
+          cp pkg/dmcp/go.bat dist/ 2>/dev/null || true
+          cp pkg/dmcp/download_wad.bat dist/ 2>/dev/null || true
+          7z a "${PACKAGE_FILENAME}" ./dist/*
 
       - name: Package (Linux/macOS)
         if: matrix.os != 'windows-latest'
         shell: bash
         run: |
-          mkdir -p pkg
-          cp build/src/crispy-doom pkg/
-          cp dmcp/build/libdmcp_*.so pkg/ 2>/dev/null || true
-          cp dmcp/build/libdmcp_*.dylib pkg/ 2>/dev/null || true
-          cp dmcp/scripts/go.sh pkg/ 2>/dev/null || true
-          cp dmcp/scripts/download_wad.sh pkg/ 2>/dev/null || true
-          chmod +x pkg/go.sh pkg/download_wad.sh 2>/dev/null || true
-          tar -czf ${{ matrix.asset_name }} pkg/*
+          mkdir -p dist
+          cp build/src/crispy-* dist/
+          cp dmcp/build/libdmcp.so dist/ 2>/dev/null || cp dmcp/build/libdmcp_core.so dist/ 2>/dev/null || true
+          cp dmcp/build/libdmcp.dylib dist/ 2>/dev/null || cp dmcp/build/libdmcp_core.dylib dist/ 2>/dev/null || true
+          cp pkg/dmcp/go.sh dist/ 2>/dev/null || true
+          cp pkg/dmcp/download_wad.sh dist/ 2>/dev/null || true
+          chmod +x dist/go.sh dist/download_wad.sh 2>/dev/null || true
+          tar -czf "${PACKAGE_FILENAME}" -C dist .
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.artifact_name }}
-          path: ${{ matrix.asset_name }}
+          name: ${{ env.PACKAGE_BASENAME }}
+          path: ${{ env.PACKAGE_FILENAME }}
+          compression-level: 0
 
   release:
+    if: startsWith(github.ref, 'refs/tags/dmcp-v')
     needs: build
     runs-on: ubuntu-latest
     permissions:

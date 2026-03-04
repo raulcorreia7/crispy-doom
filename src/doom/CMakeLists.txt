@@ -118,21 +118,30 @@ endif()
 
 if(DMCP_ENABLE)
     if(WIN32)
-        list(APPEND SDL_LINK_LIBS
-            "${DMCP_ROOT}/build/Release/dmcp_core.lib"
-            "${DMCP_ROOT}/build/Release/dmcp_generic.lib"
-        )
+        set(_dmcp_lib_candidates
+            "${DMCP_ROOT}/build/Release/dmcp.lib"
+            "${DMCP_ROOT}/build/Release/dmcp_core.lib")
     elseif(APPLE)
-        list(APPEND SDL_LINK_LIBS
-            "${DMCP_ROOT}/build/libdmcp_core.dylib"
-            "${DMCP_ROOT}/build/libdmcp_generic.dylib"
-        )
+        set(_dmcp_lib_candidates
+            "${DMCP_ROOT}/build/libdmcp.dylib"
+            "${DMCP_ROOT}/build/libdmcp_core.dylib")
     else()
-        list(APPEND SDL_LINK_LIBS
-            "${DMCP_ROOT}/build/libdmcp_core.so"
-            "${DMCP_ROOT}/build/libdmcp_generic.so"
-        )
+        set(_dmcp_lib_candidates
+            "${DMCP_ROOT}/build/libdmcp.so"
+            "${DMCP_ROOT}/build/libdmcp_core.so")
     endif()
+
+    unset(DMCP_LINK_LIB)
+    foreach(_dmcp_lib IN LISTS _dmcp_lib_candidates)
+        if(EXISTS "${_dmcp_lib}")
+            set(DMCP_LINK_LIB "${_dmcp_lib}")
+            break()
+        endif()
+    endforeach()
+    if(NOT DMCP_LINK_LIB)
+        list(GET _dmcp_lib_candidates 0 DMCP_LINK_LIB)
+    endif()
+    list(APPEND SDL_LINK_LIBS "${DMCP_LINK_LIB}")
 endif()
 
 target_link_libraries(doom ${SDL_LINK_LIBS})

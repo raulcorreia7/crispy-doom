@@ -36,7 +36,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: raulcorreia7/doom-mcp
-          ref: ae3f677210e7e30d9c3905da1bb7274de78e8a0b
+          ref: ba448e4cc6cb3a823d15f1df6e219a6c7bd13d65
           path: dmcp
           submodules: recursive
 

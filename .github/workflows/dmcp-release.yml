@@ -36,29 +36,9 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: raulcorreia7/doom-mcp
-          ref: dev
+          ref: ad51c8c4831db991f027cf51aa3ffafe81a64fcd
           path: dmcp
           submodules: recursive
-
-      - name: Patch DMCP shared-linking for yyjson
-        shell: bash
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-
-          cmake_file = Path("dmcp/CMakeLists.txt")
-          text = cmake_file.read_text(encoding="utf-8")
-
-          old = "  target_link_libraries(core PUBLIC dmcp::generic)\n"
-          new = "  target_link_libraries(core PUBLIC dmcp::generic PRIVATE yyjson)\n"
-
-          if old in text and new not in text:
-              text = text.replace(old, new, 1)
-              cmake_file.write_text(text, encoding="utf-8")
-              print("Patched DMCP core shared linkage to include yyjson.")
-          else:
-              print("No patch needed (already present or upstream changed).")
-          PY
 
       - name: Restore DMCP build cache
         uses: actions/cache@v4
@@ -130,9 +110,6 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release ^
             -DCMAKE_TOOLCHAIN_FILE="%VCPKG_INSTALLATION_ROOT%\scripts\buildsystems\vcpkg.cmake" ^
             -DVCPKG_TARGET_TRIPLET=x64-windows ^
-            -DCMAKE_C_FLAGS="/I%CD%\dmcp\build\vcpkg_installed\x64-windows\include" ^
-            -DCMAKE_CXX_FLAGS="/I%CD%\dmcp\build\vcpkg_installed\x64-windows\include" ^
-            -DCMAKE_SHARED_LINKER_FLAGS="/LIBPATH:%CD%\dmcp\build\vcpkg_installed\x64-windows\lib uv.lib" ^
             -DCMAKE_PREFIX_PATH="%CD%\dmcp\build\vcpkg_installed\x64-windows"
           cmake --build dmcp/build --config Release -j4
 

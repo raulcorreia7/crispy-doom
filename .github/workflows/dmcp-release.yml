@@ -87,7 +87,7 @@ jobs:
             -DDMCP_BUILD_ADAPTER_ZDOOM=OFF \
             -DDMCP_BUILD_ADAPTER_CRISPY=OFF \
             -DCMAKE_BUILD_TYPE=Release
-          cmake --build dmcp/build --config Release -j4
+          cmake --build dmcp/build --config Release --parallel
 
       - name: Build DMCP (macOS)
         if: matrix.os == 'macos-latest'
@@ -103,16 +103,16 @@ jobs:
             -DCMAKE_CXX_COMPILER=clang++ \
             -DCMAKE_C_COMPILER=clang \
             -DCMAKE_SHARED_LINKER_FLAGS="-Wl,-undefined,dynamic_lookup"
-          cmake --build dmcp/build --config Release -j4
+          cmake --build dmcp/build --config Release --parallel
 
       - name: Build DMCP (Windows)
         if: matrix.os == 'windows-latest'
         shell: cmd
         run: |
           set VCPKG_DEFAULT_BINARY_CACHE=%CD%\vcpkg-binary-cache
-          set VCPKG_BINARY_SOURCES=clear;files,%VCPKG_DEFAULT_BINARY_CACHE%,readwrite
+          if not exist "%VCPKG_DEFAULT_BINARY_CACHE%" mkdir "%VCPKG_DEFAULT_BINARY_CACHE%"
           echo {"dependencies":["zlib","libuv","openssl"]}> dmcp\vcpkg.json
-          cmake -S dmcp -B dmcp/build -G "Ninja" ^
+          cmake -S dmcp -B dmcp/build ^
             -DDMCP_BUILD_SHARED=ON ^
             -DDMCP_BUILD_EXAMPLES=OFF ^
             -DDMCP_BUILD_ADAPTER_FAKE=OFF ^
@@ -122,7 +122,7 @@ jobs:
             -DCMAKE_TOOLCHAIN_FILE="%VCPKG_INSTALLATION_ROOT%\scripts\buildsystems\vcpkg.cmake" ^
             -DVCPKG_TARGET_TRIPLET=x64-windows ^
             -DCMAKE_PREFIX_PATH="%CD%\dmcp\build\vcpkg_installed\x64-windows"
-          cmake --build dmcp/build --config Release -j4
+          cmake --build dmcp/build --config Release --parallel
 
       - name: Configure with DMCP (Linux/macOS)
         if: matrix.os != 'windows-latest'
@@ -139,8 +139,8 @@ jobs:
         shell: cmd
         run: |
           set VCPKG_DEFAULT_BINARY_CACHE=%CD%\vcpkg-binary-cache
-          set VCPKG_BINARY_SOURCES=clear;files,%VCPKG_DEFAULT_BINARY_CACHE%,readwrite
-          cmake -B build -G "Ninja" ^
+          if not exist "%VCPKG_DEFAULT_BINARY_CACHE%" mkdir "%VCPKG_DEFAULT_BINARY_CACHE%"
+          cmake -B build ^
             -DDMCP_ENABLE=ON ^
             -DDMCP_ROOT="%CD%\dmcp" ^
             -DDMCP_ADAPTER_DIR="%CD%\dmcp\adapters\crispy-doom" ^
@@ -151,7 +151,7 @@ jobs:
 
       - name: Build
         shell: bash
-        run: cmake --build build --config Release -j4
+        run: cmake --build build --config Release --parallel
 
       - name: Package (Windows)
         if: matrix.os == 'windows-latest'

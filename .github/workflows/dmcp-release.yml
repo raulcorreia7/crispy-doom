@@ -131,6 +131,7 @@ jobs:
             -DDMCP_BUILD_ADAPTER_ZDOOM=OFF ^
             -DDMCP_BUILD_ADAPTER_CRISPY=OFF ^
             -DCMAKE_BUILD_TYPE=Release ^
+            -DCMAKE_POLICY_DEFAULT_CMP0141=NEW ^
             -DCMAKE_MSVC_DEBUG_INFORMATION_FORMAT=Embedded ^
             -DCMAKE_TOOLCHAIN_FILE="%VCPKG_INSTALLATION_ROOT%\scripts\buildsystems\vcpkg.cmake" ^
             -DVCPKG_TARGET_TRIPLET=x64-windows ^
@@ -181,6 +182,7 @@ jobs:
             -DDMCP_ROOT="%CD%\dmcp" ^
             -DDMCP_ADAPTER_DIR="%CD%\dmcp\adapters\crispy-doom" ^
             -DCMAKE_BUILD_TYPE=Release ^
+            -DCMAKE_POLICY_DEFAULT_CMP0141=NEW ^
             -DCMAKE_MSVC_DEBUG_INFORMATION_FORMAT=Embedded ^
             -DCMAKE_C_FLAGS_RELEASE="/O2 /Ob2 /DNDEBUG /Z7" ^
             -DCMAKE_CXX_FLAGS_RELEASE="/O2 /Ob2 /DNDEBUG /Z7" ^
@@ -198,6 +200,7 @@ jobs:
         shell: cmd
         run: |
           set CL=/FS
+          set _CL_=/Z7
           cmake --build build --config Release --parallel
           if errorlevel 1 (
             echo First build attempt failed, retrying once...

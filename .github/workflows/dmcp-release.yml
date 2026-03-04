@@ -156,6 +156,8 @@ jobs:
             -DDMCP_ADAPTER_DIR="%CD%\dmcp\adapters\crispy-doom" ^
             -DCMAKE_BUILD_TYPE=Release ^
             -DCMAKE_MSVC_DEBUG_INFORMATION_FORMAT=Embedded ^
+            -DCMAKE_C_FLAGS_RELEASE="/O2 /Ob2 /DNDEBUG /Z7" ^
+            -DCMAKE_CXX_FLAGS_RELEASE="/O2 /Ob2 /DNDEBUG /Z7" ^
             -DCMAKE_TOOLCHAIN_FILE="%VCPKG_INSTALLATION_ROOT%\scripts\buildsystems\vcpkg.cmake" ^
             -DVCPKG_TARGET_TRIPLET=x64-windows ^
             -DCMAKE_PREFIX_PATH="%VCPKG_INSTALLATION_ROOT%\installed\x64-windows;%CD%\dmcp\build\vcpkg_installed\x64-windows"

@@ -17,16 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - os: ubuntu-latest
-            artifact_name: crispy-doom-dmcp-linux
-            asset_name: crispy-doom-dmcp-linux.tar.gz
-          - os: macos-latest
-            artifact_name: crispy-doom-dmcp-macos
-            asset_name: crispy-doom-dmcp-macos.tar.gz
-          - os: windows-latest
-            artifact_name: crispy-doom-dmcp-windows
-            asset_name: crispy-doom-dmcp-windows.zip
+        os: [ubuntu-latest, macos-latest, windows-latest]
 
     steps:
       - name: Checkout crispy-doom
@@ -87,6 +78,34 @@ jobs:
       - name: Setup MSVC (Windows)
         if: matrix.os == 'windows-latest'
         uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Compute package metadata
+        shell: bash
+        run: |
+          case "${RUNNER_OS}" in
+            Linux) os="linux" ;;
+            macOS) os="macos" ;;
+            Windows) os="windows" ;;
+            *)
+              echo "Unsupported RUNNER_OS=${RUNNER_OS}"
+              exit 1
+              ;;
+          esac
+
+          case "${RUNNER_ARCH}" in
+            X64) arch="x86_64" ;;
+            ARM64) arch="arm64" ;;
+            X86) arch="x86" ;;
+            *) arch="$(echo "${RUNNER_ARCH}" | tr '[:upper:]' '[:lower:]')" ;;
+          esac
+
+          ext="tar.gz"
+          if [ "${RUNNER_OS}" = "Windows" ]; then
+            ext="zip"
+          fi
+
+          echo "PACKAGE_BASENAME=crispy-doom-dmcp-${os}-${arch}" >> "$GITHUB_ENV"
+          echo "PACKAGE_FILENAME=crispy-doom-dmcp-${os}-${arch}.${ext}" >> "$GITHUB_ENV"
 
       - name: Build DMCP (Linux)
         if: matrix.os == 'ubuntu-latest'
@@ -220,7 +239,7 @@ jobs:
           cp "$VCPKG_INSTALLATION_ROOT"/installed/x64-windows/bin/*.dll dist/ 2>/dev/null || true
           cp dmcp/scripts/go.bat dist/ 2>/dev/null || true
           cp dmcp/scripts/download_wad.bat dist/ 2>/dev/null || true
-          7z a "${{ matrix.asset_name }}" ./dist/*
+          7z a "${PACKAGE_FILENAME}" ./dist/*
 
       - name: Package (Linux/macOS)
         if: matrix.os != 'windows-latest'
@@ -233,13 +252,13 @@ jobs:
           cp dmcp/scripts/go.sh dist/ 2>/dev/null || true
           cp dmcp/scripts/download_wad.sh dist/ 2>/dev/null || true
           chmod +x dist/go.sh dist/download_wad.sh 2>/dev/null || true
-          tar -czf "${{ matrix.asset_name }}" -C dist .
+          tar -czf "${PACKAGE_FILENAME}" -C dist .
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.artifact_name }}
-          path: ${{ matrix.asset_name }}
+          name: ${{ env.PACKAGE_BASENAME }}
+          path: ${{ env.PACKAGE_FILENAME }}
           compression-level: 0
 
   release:

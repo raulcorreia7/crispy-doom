@@ -36,6 +36,26 @@ jobs:
           path: dmcp
           submodules: recursive
 
+      - name: Patch DMCP shared-linking for yyjson
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          cmake_file = Path("dmcp/CMakeLists.txt")
+          text = cmake_file.read_text(encoding="utf-8")
+
+          old = "  target_link_libraries(core PUBLIC dmcp::generic)\n"
+          new = "  target_link_libraries(core PUBLIC dmcp::generic PRIVATE yyjson)\n"
+
+          if old in text and new not in text:
+              text = text.replace(old, new, 1)
+              cmake_file.write_text(text, encoding="utf-8")
+              print("Patched DMCP core shared linkage to include yyjson.")
+          else:
+              print("No patch needed (already present or upstream changed).")
+          PY
+
       - name: Install Linux Dependencies
         if: matrix.os == 'ubuntu-latest'
         run: |

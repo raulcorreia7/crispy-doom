@@ -169,7 +169,7 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: cmd
         run: |
-          set CL=/FS
+          set CL=/FS /MP1
           cmake --build build --config Release --parallel
           if errorlevel 1 (
             echo First build attempt failed, retrying once...

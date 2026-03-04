@@ -122,6 +122,7 @@ jobs:
         run: |
           echo {"dependencies":["zlib","libuv"]}> dmcp\vcpkg.json
           cmake -S dmcp -B dmcp/build ^
+            -T ClangCL ^
             -DDMCP_BUILD_SHARED=ON ^
             -DDMCP_BUILD_EXAMPLES=OFF ^
             -DDMCP_BUILD_ADAPTER_FAKE=OFF ^
@@ -151,6 +152,7 @@ jobs:
           VCPKG_FORCE_SYSTEM_BINARIES: 1
         run: |
           cmake -B build ^
+            -T ClangCL ^
             -DDMCP_ENABLE=ON ^
             -DDMCP_ROOT="%CD%\dmcp" ^
             -DDMCP_ADAPTER_DIR="%CD%\dmcp\adapters\crispy-doom" ^

@@ -6,6 +6,10 @@ on:
       - 'dmcp-v*'
   workflow_dispatch:
 
+concurrency:
+  group: dmcp-release-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     name: Build ${{ matrix.os }}
@@ -55,6 +59,16 @@ jobs:
           else:
               print("No patch needed (already present or upstream changed).")
           PY
+
+      - name: Restore DMCP build cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            dmcp/.cache
+            dmcp/build/vcpkg_installed
+          key: dmcp-build-${{ runner.os }}-${{ hashFiles('dmcp/CMakeLists.txt', 'dmcp/cmake/CPM.cmake', 'dmcp/vcpkg.json') }}
+          restore-keys: |
+            dmcp-build-${{ runner.os }}-
 
       - name: Install Linux Dependencies
         if: matrix.os == 'ubuntu-latest'
@@ -107,7 +121,7 @@ jobs:
         shell: cmd
         run: |
           echo {"dependencies":["zlib","sdl2","libuv","openssl"]}> dmcp\vcpkg.json
-          cmake -S dmcp -B dmcp/build ^
+          cmake -S dmcp -B dmcp/build -G "Ninja" ^
             -DDMCP_BUILD_SHARED=ON ^
             -DDMCP_BUILD_EXAMPLES=OFF ^
             -DDMCP_BUILD_ADAPTER_FAKE=OFF ^
@@ -136,7 +150,7 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: cmd
         run: |
-          cmake -B build ^
+          cmake -B build -G "Ninja" ^
             -DDMCP_ENABLE=ON ^
             -DDMCP_ROOT="%CD%\dmcp" ^
             -DDMCP_ADAPTER_DIR="%CD%\dmcp\adapters\crispy-doom" ^
@@ -154,7 +168,7 @@ jobs:
         shell: bash
         run: |
           mkdir -p dist
-          cp build/src/Release/crispy-*.exe dist/
+          cp build/src/crispy-*.exe dist/ 2>/dev/null || cp build/src/Release/crispy-*.exe dist/
           cp dmcp/build/Release/dmcp_*.dll dist/ 2>/dev/null || cp dmcp/build/dmcp_*.dll dist/ 2>/dev/null || true
           cp dmcp/build/vcpkg_installed/x64-windows/bin/*.dll dist/ 2>/dev/null || true
           cp "$VCPKG_INSTALLATION_ROOT"/installed/x64-windows/bin/*.dll dist/ 2>/dev/null || true

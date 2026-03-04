@@ -27,20 +27,9 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: raulcorreia7/doom-mcp
-          ref: 9db9dfa374f55e6fd186b2881c69e4ac0db4f6ee
+          ref: v0.6.0
           path: dmcp
           submodules: recursive
-
-      - name: Normalize DMCP library basename
-        shell: bash
-        run: |
-          perl -0pi -e 's/OUTPUT_NAME dmcp_core/OUTPUT_NAME dmcp/g' dmcp/CMakeLists.txt
-
-      - name: Patch DMCP SSE payload formatting for bridge compatibility
-        shell: bash
-        run: |
-          # LM Studio's MCP bridge is stricter with SSE framing; avoid multiline data payloads.
-          perl -0pi -e 's/payload\.dump\(2\)/payload.dump()/g' dmcp/src/core/server.cpp
 
       - name: Restore DMCP build cache
         id: cache-dmcp
@@ -49,9 +38,9 @@ jobs:
           path: |
             dmcp/.cache
             dmcp/build/vcpkg_installed
-          key: dmcp-build-${{ runner.os }}-v2-${{ hashFiles('dmcp/CMakeLists.txt', 'dmcp/cmake/CPM.cmake', 'dmcp/vcpkg.json', 'dmcp/src/core/server.cpp') }}
+          key: dmcp-build-${{ runner.os }}-v3-${{ hashFiles('dmcp/CMakeLists.txt', 'dmcp/cmake/CPM.cmake', 'dmcp/src/mcp/server.cpp') }}
           restore-keys: |
-            dmcp-build-${{ runner.os }}-v2-
+            dmcp-build-${{ runner.os }}-v3-
             dmcp-build-${{ runner.os }}-
 
       - name: Restore vcpkg binary cache (Windows)

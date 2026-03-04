@@ -243,6 +243,7 @@ jobs:
           compression-level: 0
 
   release:
+    if: startsWith(github.ref, 'refs/tags/dmcp-v')
     needs: build
     runs-on: ubuntu-latest
     permissions:

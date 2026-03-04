@@ -125,6 +125,8 @@ jobs:
         run: |
           echo {"dependencies":["zlib","libuv"]}> dmcp\vcpkg.json
           cmake -S dmcp -B dmcp/build ^
+            -T ClangCL ^
+            -DCMAKE_RC_COMPILER=llvm-rc ^
             -DDMCP_BUILD_SHARED=ON ^
             -DDMCP_BUILD_EXAMPLES=OFF ^
             -DDMCP_BUILD_ADAPTER_FAKE=OFF ^
@@ -178,6 +180,8 @@ jobs:
           VCPKG_FORCE_SYSTEM_BINARIES: 1
         run: |
           cmake -B build ^
+            -T ClangCL ^
+            -DCMAKE_RC_COMPILER=llvm-rc ^
             -DDMCP_ENABLE=ON ^
             -DDMCP_ROOT="%CD%\dmcp" ^
             -DDMCP_ADAPTER_DIR="%CD%\dmcp\adapters\crispy-doom" ^
@@ -199,8 +203,6 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: cmd
         run: |
-          set CL=/FS
-          set _CL_=/Z7
           cmake --build build --config Release --parallel
           if errorlevel 1 (
             echo First build attempt failed, retrying once...

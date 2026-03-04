@@ -158,9 +158,20 @@ jobs:
             -DVCPKG_TARGET_TRIPLET=x64-windows ^
             -DCMAKE_PREFIX_PATH="%VCPKG_INSTALLATION_ROOT%\installed\x64-windows;%CD%\dmcp\build\vcpkg_installed\x64-windows"
 
-      - name: Build
+      - name: Build (Linux/macOS)
+        if: matrix.os != 'windows-latest'
         shell: bash
         run: cmake --build build --config Release --parallel
+
+      - name: Build (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: cmd
+        run: |
+          cmake --build build --config Release --parallel
+          if errorlevel 1 (
+            echo First build attempt failed, retrying once...
+            cmake --build build --config Release --parallel
+          )
 
       - name: Package (Windows)
         if: matrix.os == 'windows-latest'

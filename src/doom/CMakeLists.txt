@@ -117,33 +117,9 @@ else()
 endif()
 
 if(DMCP_ENABLE)
-    if(WIN32)
-        set(_dmcp_lib_candidates
-            "${DMCP_ROOT}/build/Release/dmcp.lib"
-            "${DMCP_ROOT}/build/Release/dmcp_core.lib")
-    elseif(APPLE)
-        set(_dmcp_lib_candidates
-            "${DMCP_ROOT}/build/libdmcp.dylib"
-            "${DMCP_ROOT}/build/libdmcp_core.dylib")
-    else()
-        set(_dmcp_lib_candidates
-            "${DMCP_ROOT}/build/libdmcp.so"
-            "${DMCP_ROOT}/build/libdmcp_core.so")
-    endif()
-
-    unset(DMCP_LINK_LIB)
-    foreach(_dmcp_lib IN LISTS _dmcp_lib_candidates)
-        if(EXISTS "${_dmcp_lib}")
-            set(DMCP_LINK_LIB "${_dmcp_lib}")
-            break()
-        endif()
-    endforeach()
-    if(NOT DMCP_LINK_LIB)
-        list(GET _dmcp_lib_candidates 0 DMCP_LINK_LIB)
-    endif()
-    list(APPEND SDL_LINK_LIBS "${DMCP_LINK_LIB}")
+    set(DMCP_LIBRARY "${DMCP_ROOT}/build/libdmcp.so" PARENT_SCOPE)
 endif()
 
-target_link_libraries(doom ${SDL_LINK_LIBS})
+target_link_libraries(doom PRIVATE ${SDL_LINK_LIBS})
 set_target_properties(doom PROPERTIES COMPILE_FLAGS "${SDL_FLAGS}")
 set_target_properties(doom PROPERTIES LINK_FLAGS "${SDL_FLAGS}")

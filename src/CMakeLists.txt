@@ -177,8 +177,16 @@ else()
 endif()
 
 target_include_directories("${PROGRAM_PREFIX}doom" PRIVATE ${GAME_INCLUDE_DIRS})
-target_link_libraries("${PROGRAM_PREFIX}doom" doom ${EXTRA_LIBS})
+target_link_libraries("${PROGRAM_PREFIX}doom" PRIVATE doom ${EXTRA_LIBS})
 set_target_properties("${PROGRAM_PREFIX}doom" PROPERTIES COMPILE_FLAGS "${SDL_FLAGS}")
+
+if(DMCP_ENABLE)
+    target_link_libraries("${PROGRAM_PREFIX}doom" PRIVATE "${DMCP_ROOT}/build/libdmcp.so")
+    set_target_properties("${PROGRAM_PREFIX}doom" PROPERTIES
+        BUILD_WITH_INSTALL_RPATH ON
+        INSTALL_RPATH "$ORIGIN"
+    )
+endif()
 
 if(MSVC)
     set_target_properties("${PROGRAM_PREFIX}doom" PROPERTIES

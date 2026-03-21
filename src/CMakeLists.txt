@@ -165,6 +165,21 @@ if(WIN32)
 	list(APPEND EXTRA_LIBS winmm shlwapi)
 endif()
 
+function(configure_local_runtime_path target_name)
+    if(APPLE)
+        set(runtime_path "@loader_path")
+    elseif(UNIX)
+        set(runtime_path "\$ORIGIN")
+    else()
+        return()
+    endif()
+
+    set_target_properties("${target_name}" PROPERTIES
+                          BUILD_RPATH "${runtime_path}"
+                          INSTALL_RPATH "${runtime_path}"
+                          INSTALL_RPATH_USE_LINK_PATH FALSE)
+endfunction()
+
 if(WIN32)
     add_executable("${PROGRAM_PREFIX}doom" WIN32 ${SOURCE_FILES_WITH_DEH} "${CMAKE_CURRENT_BINARY_DIR}/doom-res.rc")
 else()
@@ -174,6 +189,7 @@ endif()
 target_include_directories("${PROGRAM_PREFIX}doom" PRIVATE ${GAME_INCLUDE_DIRS})
 target_link_libraries("${PROGRAM_PREFIX}doom" doom ${EXTRA_LIBS})
 set_target_properties("${PROGRAM_PREFIX}doom" PROPERTIES COMPILE_FLAGS "${SDL_FLAGS}")
+configure_local_runtime_path("${PROGRAM_PREFIX}doom")
 
 if(MSVC)
     set_target_properties("${PROGRAM_PREFIX}doom" PROPERTIES

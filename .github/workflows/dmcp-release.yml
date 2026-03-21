@@ -58,6 +58,7 @@ jobs:
         run: |
           cmake -S dmcp -B dmcp/build \
             -DDMCP_BUILD_SHARED=ON \
+            -DDMCP_BUILD_SINGLE_DLL=ON \
             -DDMCP_BUILD_EXAMPLES=OFF \
             -DDMCP_BUILD_ADAPTER_FAKE=OFF \
             -DDMCP_BUILD_ADAPTER_ZDOOM=OFF \
@@ -71,6 +72,7 @@ jobs:
         run: |
           cmake -S dmcp -B dmcp/build \
             -DDMCP_BUILD_SHARED=ON \
+            -DDMCP_BUILD_SINGLE_DLL=ON \
             -DDMCP_BUILD_EXAMPLES=OFF \
             -DDMCP_BUILD_ADAPTER_FAKE=OFF \
             -DDMCP_BUILD_ADAPTER_ZDOOM=OFF \
@@ -88,6 +90,7 @@ jobs:
           echo {"dependencies":["zlib","sdl2","libuv"]}> dmcp\vcpkg.json
           cmake -S dmcp -B dmcp/build ^
             -DDMCP_BUILD_SHARED=ON ^
+            -DDMCP_BUILD_SINGLE_DLL=ON ^
             -DDMCP_BUILD_EXAMPLES=OFF ^
             -DDMCP_BUILD_ADAPTER_FAKE=OFF ^
             -DDMCP_BUILD_ADAPTER_ZDOOM=OFF ^
@@ -128,26 +131,94 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: bash
         run: |
-          mkdir -p pkg
-          cp build/src/Release/crispy-doom.exe pkg/
-          cp dmcp/build/Release/dmcp_*.dll pkg/ 2>/dev/null || cp dmcp/build/dmcp_*.dll pkg/ 2>/dev/null || true
-          cp build/src/Release/*.dll pkg/ 2>/dev/null || true
-          cp dmcp/scripts/go.bat pkg/ 2>/dev/null || true
-          cp dmcp/scripts/download_wad.bat pkg/ 2>/dev/null || true
-          7z a ${{ matrix.asset_name }} pkg/*
+          set -euo pipefail
+          shopt -s nullglob
+          ARTIFACT_DIR="pkg/${{ matrix.artifact_name }}"
+          mkdir -p "$ARTIFACT_DIR/.codex"
+          cp build/src/Release/crispy-doom.exe "$ARTIFACT_DIR/"
+
+          dmcp_dlls=(dmcp/build/Release/dmcp*.dll dmcp/build/dmcp*.dll)
+          if [ ${#dmcp_dlls[@]} -eq 0 ]; then
+            echo "error: DMCP DLLs not found" >&2
+            exit 1
+          fi
+          cp "${dmcp_dlls[@]}" "$ARTIFACT_DIR/"
+
+          engine_dlls=(build/src/Release/*.dll)
+          if [ ${#engine_dlls[@]} -gt 0 ]; then
+            cp "${engine_dlls[@]}" "$ARTIFACT_DIR/"
+          fi
+
+          cp dmcp/scripts/go.bat "$ARTIFACT_DIR/"
+          cp dmcp/scripts/download_wad.bat "$ARTIFACT_DIR/"
+          cp opencode.json .mcp.json README.DMCP.md "$ARTIFACT_DIR/"
+          cp docs/build-dmcp.md "$ARTIFACT_DIR/BUILDING.md"
+          cp .codex/config.toml "$ARTIFACT_DIR/.codex/config.toml"
+          mv "$ARTIFACT_DIR/README.DMCP.md" "$ARTIFACT_DIR/README.md"
+
+          pushd pkg
+          7z a "../${{ matrix.asset_name }}" "${{ matrix.artifact_name }}"
+          popd
+
+      - name: Verify package contents (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf smoke
+          mkdir -p smoke
+          7z x "${{ matrix.asset_name }}" -osmoke >/dev/null
+          test -f "smoke/${{ matrix.artifact_name }}/crispy-doom.exe"
+          test -f "smoke/${{ matrix.artifact_name }}/README.md"
+          test -f "smoke/${{ matrix.artifact_name }}/BUILDING.md"
+          test -f "smoke/${{ matrix.artifact_name }}/opencode.json"
+          test -f "smoke/${{ matrix.artifact_name }}/.mcp.json"
+          test -f "smoke/${{ matrix.artifact_name }}/.codex/config.toml"
+          compgen -G "smoke/${{ matrix.artifact_name }}/dmcp*.dll" >/dev/null
 
       - name: Package (Linux/macOS)
         if: matrix.os != 'windows-latest'
         shell: bash
         run: |
-          mkdir -p pkg
-          cp build/src/crispy-doom pkg/
-          cp dmcp/build/libdmcp_*.so pkg/ 2>/dev/null || true
-          cp dmcp/build/libdmcp_*.dylib pkg/ 2>/dev/null || true
-          cp dmcp/scripts/go.sh pkg/ 2>/dev/null || true
-          cp dmcp/scripts/download_wad.sh pkg/ 2>/dev/null || true
-          chmod +x pkg/go.sh pkg/download_wad.sh 2>/dev/null || true
-          tar -czf ${{ matrix.asset_name }} pkg/*
+          set -euo pipefail
+          shopt -s nullglob
+          ARTIFACT_DIR="pkg/${{ matrix.artifact_name }}"
+          mkdir -p "$ARTIFACT_DIR/.codex"
+          cp build/src/crispy-doom "$ARTIFACT_DIR/"
+
+          dmcp_libs=(dmcp/build/libdmcp*.so dmcp/build/libdmcp*.dylib)
+          if [ ${#dmcp_libs[@]} -eq 0 ]; then
+            echo "error: DMCP runtime library not found" >&2
+            exit 1
+          fi
+          cp "${dmcp_libs[@]}" "$ARTIFACT_DIR/"
+
+          cp dmcp/scripts/go.sh "$ARTIFACT_DIR/"
+          cp dmcp/scripts/download_wad.sh "$ARTIFACT_DIR/"
+          cp opencode.json .mcp.json README.DMCP.md "$ARTIFACT_DIR/"
+          cp docs/build-dmcp.md "$ARTIFACT_DIR/BUILDING.md"
+          cp .codex/config.toml "$ARTIFACT_DIR/.codex/config.toml"
+          mv "$ARTIFACT_DIR/README.DMCP.md" "$ARTIFACT_DIR/README.md"
+
+          chmod +x "$ARTIFACT_DIR/go.sh" "$ARTIFACT_DIR/download_wad.sh"
+          tar -czf "${{ matrix.asset_name }}" -C pkg "${{ matrix.artifact_name }}"
+
+      - name: Verify package contents (Linux/macOS)
+        if: matrix.os != 'windows-latest'
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf smoke
+          mkdir -p smoke
+          tar -xzf "${{ matrix.asset_name }}" -C smoke
+          test -f "smoke/${{ matrix.artifact_name }}/crispy-doom"
+          test -f "smoke/${{ matrix.artifact_name }}/README.md"
+          test -f "smoke/${{ matrix.artifact_name }}/BUILDING.md"
+          test -f "smoke/${{ matrix.artifact_name }}/opencode.json"
+          test -f "smoke/${{ matrix.artifact_name }}/.mcp.json"
+          test -f "smoke/${{ matrix.artifact_name }}/.codex/config.toml"
+          compgen -G "smoke/${{ matrix.artifact_name }}/libdmcp*.so" >/dev/null || \
+            compgen -G "smoke/${{ matrix.artifact_name }}/libdmcp*.dylib" >/dev/null
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4

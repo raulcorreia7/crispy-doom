@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "doom": {
+      "type": "http",
+      "url": "http://localhost:6060/mcp"
+    }
+  }
+}

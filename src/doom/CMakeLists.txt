@@ -118,21 +118,52 @@ endif()
 
 if(DMCP_ENABLE)
     if(WIN32)
-        list(APPEND SDL_LINK_LIBS
-            "${DMCP_ROOT}/build/Release/dmcp_core.lib"
-            "${DMCP_ROOT}/build/Release/dmcp_generic.lib"
-        )
-    elseif(APPLE)
-        list(APPEND SDL_LINK_LIBS
-            "${DMCP_ROOT}/build/libdmcp_core.dylib"
-            "${DMCP_ROOT}/build/libdmcp_generic.dylib"
+        set(DMCP_LIBRARY_DIRS
+            "${DMCP_ROOT}/build/Release"
+            "${DMCP_ROOT}/build"
         )
     else()
-        list(APPEND SDL_LINK_LIBS
-            "${DMCP_ROOT}/build/libdmcp_core.so"
-            "${DMCP_ROOT}/build/libdmcp_generic.so"
+        set(DMCP_LIBRARY_DIRS "${DMCP_ROOT}/build")
+    endif()
+
+    set(DMCP_LINK_LIBS)
+
+    foreach(DMCP_LIBRARY_DIR IN LISTS DMCP_LIBRARY_DIRS)
+        if(WIN32)
+            set(DMCP_SINGLE_LIB "${DMCP_LIBRARY_DIR}/dmcp.lib")
+            set(DMCP_CORE_LIB "${DMCP_LIBRARY_DIR}/dmcp_core.lib")
+            set(DMCP_GENERIC_LIB "${DMCP_LIBRARY_DIR}/dmcp_generic.lib")
+        elseif(APPLE)
+            set(DMCP_SINGLE_LIB "${DMCP_LIBRARY_DIR}/libdmcp.dylib")
+            set(DMCP_CORE_LIB "${DMCP_LIBRARY_DIR}/libdmcp_core.dylib")
+            set(DMCP_GENERIC_LIB "${DMCP_LIBRARY_DIR}/libdmcp_generic.dylib")
+        else()
+            set(DMCP_SINGLE_LIB "${DMCP_LIBRARY_DIR}/libdmcp.so")
+            set(DMCP_CORE_LIB "${DMCP_LIBRARY_DIR}/libdmcp_core.so")
+            set(DMCP_GENERIC_LIB "${DMCP_LIBRARY_DIR}/libdmcp_generic.so")
+        endif()
+
+        if(EXISTS "${DMCP_SINGLE_LIB}")
+            set(DMCP_LINK_LIBS "${DMCP_SINGLE_LIB}")
+            break()
+        endif()
+
+        if(EXISTS "${DMCP_CORE_LIB}" AND EXISTS "${DMCP_GENERIC_LIB}")
+            set(DMCP_LINK_LIBS
+                "${DMCP_CORE_LIB}"
+                "${DMCP_GENERIC_LIB}"
+            )
+            break()
+        endif()
+    endforeach()
+
+    if(NOT DMCP_LINK_LIBS)
+        message(FATAL_ERROR
+            "DMCP libraries not found. Expected either ${DMCP_SINGLE_LIB} or both ${DMCP_CORE_LIB} and ${DMCP_GENERIC_LIB}"
         )
     endif()
+
+    list(APPEND SDL_LINK_LIBS ${DMCP_LINK_LIBS})
 endif()
 
 target_link_libraries(doom ${SDL_LINK_LIBS})

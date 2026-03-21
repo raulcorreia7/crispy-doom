@@ -72,6 +72,23 @@ Daily builds of Crispy Doom can be found here:
 http://latest.chocolate-doom.org/
 
 Crispy Doom can play nearly all variants of Doom. If you don't own any, you may download the [Shareware version of Doom](http://cdn.debian.net/debian/pool/non-free/d/doom-wad-shareware/doom-wad-shareware_1.9.fixed.orig.tar.gz), extract it and copy the DOOM1.WAD file into your Crispy Doom directory. Alternatively, you may want to play Crispy Doom with [Freedoom](https://www.chocolate-doom.org/wiki/index.php/Freedoom) and a MegaWAD.
+
+### DMCP builds
+
+Latest release quickstart:
+
+```bash
+curl -L https://github.com/raulcorreia7/crispy-doom/releases/latest/download/crispy-doom-dmcp-linux.tar.gz | tar -xz
+```
+
+The release artifact includes preconfigured agent files, so after you run the
+game you can open the extracted folder in OpenCode, Claude Code, or Codex and
+interact with `crispy-doom` through MCP immediately.
+
+For the DMCP-enabled release artifact, agent-ready config files and quickstart,
+see [README.DMCP.md](README.DMCP.md). Source build dependencies and local build
+steps are documented in [docs/build-dmcp.md](docs/build-dmcp.md).
+
 ### Sources
 [![Open Hub](https://www.openhub.net/p/crispy-doom/widgets/project_thin_badge?style=flat&format=gif)](https://www.openhub.net/p/crispy-doom)
 

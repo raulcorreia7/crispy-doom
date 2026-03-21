@@ -152,8 +152,8 @@ jobs:
             cp "${engine_dlls[@]}" "$ARTIFACT_DIR/"
           fi
 
-          cp dmcp/scripts/go.bat "$ARTIFACT_DIR/"
-          cp dmcp/scripts/download_wad.bat "$ARTIFACT_DIR/"
+          cp scripts/dmcp-release/go.bat "$ARTIFACT_DIR/"
+          cp scripts/dmcp-release/download_wad.bat "$ARTIFACT_DIR/"
           cp opencode.json .mcp.json README.DMCP.md "$ARTIFACT_DIR/"
           cp docs/build-dmcp.md "$ARTIFACT_DIR/BUILDING.md"
           cp .codex/config.toml "$ARTIFACT_DIR/.codex/config.toml"
@@ -196,8 +196,8 @@ jobs:
           fi
           cp "${dmcp_libs[@]}" "$ARTIFACT_DIR/"
 
-          cp dmcp/scripts/go.sh "$ARTIFACT_DIR/"
-          cp dmcp/scripts/download_wad.sh "$ARTIFACT_DIR/"
+          cp scripts/dmcp-release/go.sh "$ARTIFACT_DIR/"
+          cp scripts/dmcp-release/download_wad.sh "$ARTIFACT_DIR/"
           cp opencode.json .mcp.json README.DMCP.md "$ARTIFACT_DIR/"
           cp docs/build-dmcp.md "$ARTIFACT_DIR/BUILDING.md"
           cp .codex/config.toml "$ARTIFACT_DIR/.codex/config.toml"

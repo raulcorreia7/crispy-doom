@@ -25,8 +25,10 @@ Invoke-WebRequest https://github.com/raulcorreia7/crispy-doom/releases/latest/do
 Then:
 
 1. Put an IWAD in the extracted folder, or run `./download_wad.sh` / `download_wad.bat`.
-2. Start `./crispy-doom -iwad ./doom1.wad` or use `./go.sh` / `go.bat`.
-3. Open that folder in your agent tool:
+2. Run `./crispy-doom -iwad ./doom1.wad`.
+3. `./go.sh` / `go.bat` is the convenience path and auto-downloads `doom1.wad`
+   if it is missing.
+4. Open that folder in your agent tool:
    - OpenCode loads `opencode.json`
    - Claude Code loads `.mcp.json`
    - Codex loads `.codex/config.toml`

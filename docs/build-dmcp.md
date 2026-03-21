@@ -64,6 +64,10 @@ cmake --build build-dmcp --config Release --parallel
 The current CMake integration prefers the unified `dmcp` shared library and
 falls back to `dmcp_core` + `dmcp_generic` when needed.
 
+`DMCP_BUILD_ADAPTER_CRISPY=OFF` is intentional: `crispy-doom` builds the Crispy
+adapter sources directly from `DMCP_ADAPTER_DIR`, so the adapter is native to
+the game binary rather than shipped as a separate adapter library.
+
 ## Verify
 
 ```bash

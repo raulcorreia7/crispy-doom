@@ -84,6 +84,7 @@ add_library(doom STATIC
 target_include_directories(doom PRIVATE "../" "${CMAKE_CURRENT_BINARY_DIR}/../../")
 
 if(DMCP_ENABLE)
+    target_compile_definitions(doom PRIVATE DMCP_STATIC=1)
     target_include_directories(doom PRIVATE
         "${DMCP_ADAPTER_DIR}/include"
         "${DMCP_ROOT}/include"

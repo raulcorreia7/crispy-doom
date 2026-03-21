@@ -56,6 +56,7 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         shell: bash
         run: |
+          # Crispy builds its adapter sources natively via DMCP_ADAPTER_DIR.
           cmake -S dmcp -B dmcp/build \
             -DDMCP_BUILD_SHARED=ON \
             -DDMCP_BUILD_SINGLE_DLL=ON \
@@ -70,6 +71,7 @@ jobs:
         if: matrix.os == 'macos-latest'
         shell: bash
         run: |
+          # Crispy builds its adapter sources natively via DMCP_ADAPTER_DIR.
           cmake -S dmcp -B dmcp/build \
             -DDMCP_BUILD_SHARED=ON \
             -DDMCP_BUILD_SINGLE_DLL=ON \
@@ -88,6 +90,7 @@ jobs:
         shell: cmd
         run: |
           echo {"dependencies":["zlib","sdl2","libuv"]}> dmcp\vcpkg.json
+          rem Crispy builds its adapter sources natively via DMCP_ADAPTER_DIR.
           cmake -S dmcp -B dmcp/build ^
             -DDMCP_BUILD_SHARED=ON ^
             -DDMCP_BUILD_SINGLE_DLL=ON ^

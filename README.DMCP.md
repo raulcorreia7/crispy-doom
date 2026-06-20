@@ -14,7 +14,7 @@ compact, structured output and hides verbose schemas.
 Linux:
 
 ```bash
-curl -L https://github.com/raulcorreia7/crispy-doom/releases/latest/download/crispy-doom-dmcp-linux.tar.gz | tar -xz
+curl -fL https://github.com/raulcorreia7/crispy-doom/releases/latest/download/crispy-doom-dmcp-linux.tar.gz | tar -xz
 cd crispy-doom-dmcp-linux
 ./go.sh
 ```
@@ -22,7 +22,7 @@ cd crispy-doom-dmcp-linux
 macOS:
 
 ```bash
-curl -L https://github.com/raulcorreia7/crispy-doom/releases/latest/download/crispy-doom-dmcp-macos.tar.gz | tar -xz
+curl -fL https://github.com/raulcorreia7/crispy-doom/releases/latest/download/crispy-doom-dmcp-macos.tar.gz | tar -xz
 cd crispy-doom-dmcp-macos
 ./go.sh
 ```
@@ -66,8 +66,9 @@ Once a level is loaded, try controlled actions:
 
 On Windows, use `.\dmcp-agent.bat` instead of `./dmcp-agent`.
 
-The helper requires `uv`. Install it from <https://docs.astral.sh/uv/> if the
-launcher reports it is missing.
+The helper requires `uv` and Python 3.10 or newer. Install `uv` from
+<https://docs.astral.sh/uv/> if the launcher reports it is missing. First run
+may download locked Python dependencies unless they are already cached.
 
 ## Agent CLI
 
@@ -103,7 +104,7 @@ More examples are in `agents/python/README.md`.
 ## Code Editors and MCP Clients
 
 Use raw MCP config when your preferred editor or agent client supports MCP
-directly. This package includes ready-to-use presets:
+directly. This package includes copy-ready presets:
 
 - Codex: `agent-presets/codex/config.toml`
 - OpenCode: `agent-presets/opencode/opencode.json`
@@ -138,8 +139,10 @@ Minimal MCP JSON config:
 }
 ```
 
-Use raw MCP for custom clients, debugging, or tools not exposed by the helper.
-For normal agent gameplay, prefer `dmcp-agent`.
+Copy or merge the matching preset into your MCP client configuration when you
+want direct MCP access. The package does not auto-enable editor configs from the
+extracted folder. Use raw MCP for custom clients, debugging, or tools not
+exposed by the helper. For normal agent gameplay, prefer `dmcp-agent`.
 
 ## For Developers
 
@@ -153,6 +156,7 @@ Package layout:
 - `agent-presets/`: raw MCP config files for common clients.
 - `BUILDING.md`: source build notes for this fork.
 - `AGENTS.md`: concise agent-oriented usage notes.
+- `COPYING.md`, `AUTHORS`: license and attribution files.
 
 Useful checks:
 
@@ -180,7 +184,11 @@ the source-stable protocol wrappers from the `doom-mcp` SDK.
 - macOS packages expect the same runtime libraries from Homebrew when they are
   not already available:
   `brew install sdl2 sdl2_net sdl2_mixer fluid-synth libpng libsamplerate`.
-- The agent helper requires `uv`: <https://docs.astral.sh/uv/>.
+- Unix WAD download uses `curl` or `wget`, `tar` for the fallback archive, and
+  `sha256sum` or `shasum` for checksum verification.
+- The agent helper requires `uv` and Python 3.10 or newer:
+  <https://docs.astral.sh/uv/>. First run may download locked Python
+  dependencies unless the `uv` cache is already warm.
 
 ## Notes
 
@@ -189,8 +197,6 @@ the source-stable protocol wrappers from the `doom-mcp` SDK.
   screenshot tools are not exposed.
 - DMCP does not require a global config file in this fork. Runtime behavior is
   controlled by command-line flags; MCP client files in `agent-presets/` are
-  templates.
-- Claude Code and Codex may ask you to trust project-local MCP config the first
-  time you open the extracted folder.
+  templates to copy or merge into your preferred client.
 - Release archives do not bundle WAD files. The included downloader verifies
   the expected SHA256 for the shareware `doom1.wad`.

@@ -99,13 +99,13 @@ Crispy Doom can play nearly all variants of Doom. If you don't own any, you may 
 Download the latest release artifact for your OS:
 
 ```bash
-curl -L https://github.com/raulcorreia7/crispy-doom/releases/latest/download/crispy-doom-dmcp-linux.tar.gz | tar -xz
+curl -fL https://github.com/raulcorreia7/crispy-doom/releases/latest/download/crispy-doom-dmcp-linux.tar.gz | tar -xz
 cd crispy-doom-dmcp-linux
 ./go.sh
 ```
 
 ```bash
-curl -L https://github.com/raulcorreia7/crispy-doom/releases/latest/download/crispy-doom-dmcp-macos.tar.gz | tar -xz
+curl -fL https://github.com/raulcorreia7/crispy-doom/releases/latest/download/crispy-doom-dmcp-macos.tar.gz | tar -xz
 cd crispy-doom-dmcp-macos
 ./go.sh
 ```
@@ -131,8 +131,9 @@ the bundled Python `dmcp-agent` helper before calling MCP tools directly:
 ./dmcp-agent spawn DoomImp --x 160 --y 96
 ```
 
-On Windows use `.\dmcp-agent.bat`. The helper requires `uv`; install it from
-<https://docs.astral.sh/uv/> if the launcher reports it is missing.
+On Windows use `.\dmcp-agent.bat`. The helper requires `uv` and Python 3.10 or
+newer; install `uv` from <https://docs.astral.sh/uv/> if the launcher reports it
+is missing.
 
 Linux/macOS packages use system SDL2, FluidSynth, png, samplerate, and zlib
 runtime libraries. If the loader reports a missing library, install the runtime

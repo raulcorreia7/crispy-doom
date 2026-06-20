@@ -9,7 +9,7 @@ Start the game with DMCP enabled before using an MCP client:
 On Windows use:
 
 ```bat
-go.bat
+.\go.bat
 ```
 
 The release package listens on `http://localhost:6060/mcp` by default. Use
@@ -32,8 +32,10 @@ and talks to the running MCP server.
 ./dmcp-agent input-plan forward --ticks 8
 ```
 
-On Windows use `dmcp-agent.bat`. The helper requires `uv`; install it from
-<https://docs.astral.sh/uv/> if the launcher reports it is missing.
+On Windows use `.\dmcp-agent.bat`. The helper requires `uv` and Python 3.10 or
+newer; install `uv` from <https://docs.astral.sh/uv/> if the launcher reports it
+is missing. First run may download locked Python dependencies unless they are
+already cached.
 
 Use exact names from `./dmcp-agent --pretty content`. Batch commands use
 canonical DMCP fields only:

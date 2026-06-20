@@ -191,6 +191,8 @@ main() {
     "$root/README.md"
     "$root/BUILDING.md"
     "$root/AGENTS.md"
+    "$root/COPYING.md"
+    "$root/AUTHORS"
     "$root/VERSION.txt"
     "$root/agent-presets/codex/config.toml"
     "$root/agent-presets/opencode/opencode.json"
@@ -241,6 +243,8 @@ main() {
 
   grep -F 'dmcp-agent = "dmcp_agent.cli:main"' "$root/agents/python/pyproject.toml" >/dev/null ||
     die "Python agent package is missing the dmcp-agent entry point"
+  grep -F 'package-root `dmcp-agent`' "$root/agents/python/README.md" >/dev/null ||
+    die "Python agent README must use release-package paths"
 
   if find "$root" -type f -iname '*.wad' -print -quit | grep -q .; then
     die "release package must not bundle WAD files"

@@ -7,6 +7,8 @@ set -Eeuo pipefail
 IFS=$'\n\t'
 
 readonly PROGRAM_NAME="${0##*/}"
+readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+readonly REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 platform=""
 
@@ -94,30 +96,41 @@ install_macos() {
   brew install cmake pkg-config sdl2 sdl2_net sdl2_mixer fluid-synth libpng libsamplerate
 }
 
-install_windows() {
-  local vcpkg_root="${VCPKG_INSTALLATION_ROOT:-}"
-  local vcpkg_exe=""
+windows_vcpkg_root() {
+  local vcpkg_root="${VCPKG_INSTALLATION_ROOT:-${VCPKG_ROOT:-}}"
+  local vcpkg_path=""
 
-  [[ -n "$vcpkg_root" ]] || die "VCPKG_INSTALLATION_ROOT is not set"
-  if command -v cygpath >/dev/null 2>&1; then
-    vcpkg_root="$(cygpath -u "$vcpkg_root")"
+  if [[ -z "$vcpkg_root" ]] && command -v vcpkg >/dev/null 2>&1; then
+    vcpkg_path="$(command -v vcpkg)"
+    vcpkg_root="$(dirname "$vcpkg_path")"
   fi
 
+  [[ -n "$vcpkg_root" ]] || die "vcpkg root not found; set VCPKG_INSTALLATION_ROOT or VCPKG_ROOT"
+
+  if command -v cygpath >/dev/null 2>&1; then
+    cygpath -u "$vcpkg_root"
+  else
+    printf '%s\n' "$vcpkg_root"
+  fi
+}
+
+install_windows() {
+  local vcpkg_root
+  local vcpkg_exe=""
+
+  vcpkg_root="$(windows_vcpkg_root)"
   vcpkg_exe="$vcpkg_root/vcpkg"
   if [[ -x "$vcpkg_exe.exe" ]]; then
     vcpkg_exe="$vcpkg_exe.exe"
   fi
-  [[ -x "$vcpkg_exe" ]] || die "vcpkg executable not found under VCPKG_INSTALLATION_ROOT"
+  [[ -x "$vcpkg_exe" ]] || die "vcpkg executable not found under $vcpkg_root"
 
-  "$vcpkg_exe" install \
-    zlib \
-    sdl2 \
-    sdl2-net \
-    sdl2-mixer \
-    fluidsynth \
-    libpng \
-    libsamplerate \
-    --triplet x64-windows
+  (
+    cd "$REPO_ROOT"
+    "$vcpkg_exe" install \
+      --triplet x64-windows \
+      --vcpkg-root "$vcpkg_root"
+  )
 }
 
 main() {

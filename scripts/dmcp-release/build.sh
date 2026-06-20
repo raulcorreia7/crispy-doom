@@ -106,8 +106,15 @@ validate_args() {
 }
 
 windows_vcpkg_root() {
-  local vcpkg_root="${VCPKG_INSTALLATION_ROOT:-}"
-  [[ -n "$vcpkg_root" ]] || die "VCPKG_INSTALLATION_ROOT is not set"
+  local vcpkg_root="${VCPKG_INSTALLATION_ROOT:-${VCPKG_ROOT:-}}"
+  local vcpkg_path=""
+
+  if [[ -z "$vcpkg_root" ]] && command -v vcpkg >/dev/null 2>&1; then
+    vcpkg_path="$(command -v vcpkg)"
+    vcpkg_root="$(dirname "$vcpkg_path")"
+  fi
+
+  [[ -n "$vcpkg_root" ]] || die "vcpkg root not found; set VCPKG_INSTALLATION_ROOT or VCPKG_ROOT"
 
   if command -v cygpath >/dev/null 2>&1; then
     cygpath -m "$vcpkg_root"

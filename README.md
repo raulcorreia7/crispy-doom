@@ -99,20 +99,20 @@ Crispy Doom can play nearly all variants of Doom. If you don't own any, you may 
 Download the latest release artifact for your OS:
 
 ```bash
-curl -fL https://github.com/raulcorreia7/crispy-doom/releases/latest/download/crispy-doom-linux.tar.gz | tar -xz
-cd crispy-doom-linux
+curl -fL https://github.com/raulcorreia7/crispy-doom/releases/latest/download/crispy-doom-linux-x86_64.tar.gz | tar -xz
+cd crispy-doom-linux-x86_64
 ./go.sh
 ```
 
 ```bash
-curl -fL https://github.com/raulcorreia7/crispy-doom/releases/latest/download/crispy-doom-macos.tar.gz | tar -xz
-cd crispy-doom-macos
+curl -fL https://github.com/raulcorreia7/crispy-doom/releases/latest/download/crispy-doom-macos-arm64.tar.gz | tar -xz
+cd crispy-doom-macos-arm64
 ./go.sh
 ```
 
 ```powershell
-Invoke-WebRequest https://github.com/raulcorreia7/crispy-doom/releases/latest/download/crispy-doom-windows.zip -OutFile crispy-doom-windows.zip; Expand-Archive crispy-doom-windows.zip -DestinationPath . -Force
-cd crispy-doom-windows
+Invoke-WebRequest https://github.com/raulcorreia7/crispy-doom/releases/latest/download/crispy-doom-windows-x86_64.zip -OutFile crispy-doom-windows-x86_64.zip; Expand-Archive crispy-doom-windows-x86_64.zip -DestinationPath . -Force
+cd crispy-doom-windows-x86_64
 .\go.bat
 ```
 

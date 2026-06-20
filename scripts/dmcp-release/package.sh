@@ -18,6 +18,7 @@ readonly DMCP_RUNTIME_LINUX="libdmcp.so"
 readonly DMCP_RUNTIME_MACOS="libdmcp.dylib"
 
 platform=""
+package_arch="${PACKAGE_ARCH:-}"
 artifact_name="${ARTIFACT_NAME:-}"
 asset_name="${ASSET_NAME:-}"
 release_tag="${RELEASE_TAG:-}"
@@ -36,6 +37,7 @@ Assemble and verify the Crispy Doom release artifact with DMCP support.
 
 Options:
       --platform NAME       Target platform: linux, macos, or windows.
+      --package-arch ARCH   Native package architecture: x86_64 or arm64.
       --artifact-name NAME  Directory name inside the archive.
       --asset-name FILE     Archive file to write.
       --release-tag TAG     Release tag to write into VERSION.txt.
@@ -70,12 +72,37 @@ abs_path() {
   esac
 }
 
+normalize_arch() {
+  local arch="$1"
+  arch="$(printf '%s' "$arch" | tr '[:upper:]' '[:lower:]' | tr '-' '_')"
+  case "$arch" in
+    amd64|x64|x86_64) printf 'x86_64\n' ;;
+    aarch64|arm64) printf 'arm64\n' ;;
+    *) printf '%s\n' "$arch" ;;
+  esac
+}
+
+detect_package_arch() {
+  local arch="${PROCESSOR_ARCHITECTURE:-}"
+
+  if [[ -z "$arch" || "$arch" == "x86" ]]; then
+    arch="$(uname -m 2>/dev/null || true)"
+  fi
+
+  normalize_arch "$arch"
+}
+
 parse_args() {
   while [[ $# -gt 0 ]]; do
     case "$1" in
       --platform)
         [[ "${2:-}" ]] || die_usage "$1 requires NAME"
         platform="$2"
+        shift 2
+        ;;
+      --package-arch)
+        [[ "${2:-}" ]] || die_usage "$1 requires ARCH"
+        package_arch="$2"
         shift 2
         ;;
       --artifact-name)
@@ -128,17 +155,41 @@ parse_args() {
 }
 
 validate_args() {
+  local detected_arch
+  local asset_file
+
   case "$platform" in
     linux|macos|windows) ;;
     "") die_usage "--platform is required" ;;
     *) die_usage "--platform must be linux, macos, or windows" ;;
   esac
+  detected_arch="$(detect_package_arch)"
+  case "$detected_arch" in
+    x86_64|arm64) ;;
+    *) die "unsupported or unknown build architecture: ${detected_arch:-unknown}" ;;
+  esac
+  if [[ -n "$package_arch" ]]; then
+    package_arch="$(normalize_arch "$package_arch")"
+    [[ "$package_arch" == "$detected_arch" ]] ||
+      die "package architecture '$package_arch' does not match build host architecture '$detected_arch'"
+  else
+    package_arch="$detected_arch"
+  fi
   [[ -n "$artifact_name" ]] || die_usage "--artifact-name is required"
   [[ -n "$asset_name" ]] || die_usage "--asset-name is required"
   dmcp_dir="$(abs_path "$dmcp_dir")"
   build_dir="$(abs_path "$build_dir")"
   package_root="$(abs_path "$package_root")"
   asset_name="$(abs_path "$asset_name")"
+  asset_file="${asset_name##*/}"
+  [[ "$artifact_name" == *"$platform"* ]] ||
+    die "artifact name must include target platform '$platform': $artifact_name"
+  [[ "$artifact_name" == *"$package_arch"* ]] ||
+    die "artifact name must include target architecture '$package_arch': $artifact_name"
+  [[ "$asset_file" == *"$platform"* ]] ||
+    die "asset name must include target platform '$platform': $asset_file"
+  [[ "$asset_file" == *"$package_arch"* ]] ||
+    die "asset name must include target architecture '$package_arch': $asset_file"
   artifact_dir="$package_root/$artifact_name"
 }
 
@@ -236,6 +287,7 @@ copy_release_files() {
   {
     printf 'release_tag=%s\n' "${release_tag:-unknown}"
     printf 'platform=%s\n' "${platform:-${RUNNER_OS:-unknown}}"
+    printf 'architecture=%s\n' "$package_arch"
     printf 'crispy_commit=%s\n' "$(git_commit "$REPO_ROOT")"
     printf 'dmcp_commit=%s\n' "$(git_commit "$dmcp_dir")"
   } >"$artifact_dir/VERSION.txt"

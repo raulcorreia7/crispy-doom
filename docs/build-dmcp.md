@@ -108,7 +108,10 @@ SDK consumers can use the source-stable protocol-name wrappers from
 
 The GitHub release workflow runs for `crispy-doom-v*` tags. It builds
 Linux, macOS, and Windows archives, uploads each archive as a workflow artifact,
-then creates the GitHub release from those downloaded artifacts.
+then creates the GitHub release from those downloaded artifacts. Package names
+include the target OS and native build architecture, for example
+`crispy-doom-linux-x86_64.tar.gz`, `crispy-doom-macos-arm64.tar.gz`, and
+`crispy-doom-windows-x86_64.zip`.
 
 Each archive includes:
 

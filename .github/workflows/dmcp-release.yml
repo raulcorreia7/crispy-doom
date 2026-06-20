@@ -19,7 +19,7 @@ permissions:
 
 jobs:
   build:
-    name: Build ${{ matrix.platform }}
+    name: Build ${{ matrix.platform }} ${{ matrix.package_arch }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     strategy:
@@ -28,16 +28,19 @@ jobs:
         include:
           - os: ubuntu-latest
             platform: linux
-            artifact_name: crispy-doom-linux
-            asset_name: crispy-doom-linux.tar.gz
+            package_arch: x86_64
+            artifact_name: crispy-doom-linux-x86_64
+            asset_name: crispy-doom-linux-x86_64.tar.gz
           - os: macos-latest
             platform: macos
-            artifact_name: crispy-doom-macos
-            asset_name: crispy-doom-macos.tar.gz
+            package_arch: arm64
+            artifact_name: crispy-doom-macos-arm64
+            asset_name: crispy-doom-macos-arm64.tar.gz
           - os: windows-latest
             platform: windows
-            artifact_name: crispy-doom-windows
-            asset_name: crispy-doom-windows.zip
+            package_arch: x86_64
+            artifact_name: crispy-doom-windows-x86_64
+            asset_name: crispy-doom-windows-x86_64.zip
 
     steps:
       - name: Checkout crispy-doom
@@ -66,6 +69,7 @@ jobs:
         run: >
           scripts/dmcp-release/package.sh
           --platform "${{ matrix.platform }}"
+          --package-arch "${{ matrix.package_arch }}"
           --artifact-name "${{ matrix.artifact_name }}"
           --asset-name "${{ matrix.asset_name }}"
           --release-tag "${{ github.ref_name }}"

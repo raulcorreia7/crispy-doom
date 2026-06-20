@@ -23,6 +23,7 @@
 #include "i_swap.h"
 #include "p_local.h"
 #include "a11y.h"
+#include "p_mapformat.h"
 #include "sv_extsaveg.h" // [crispy] for extended savegame information
 
 // MACROS ------------------------------------------------------------------
@@ -2127,6 +2128,7 @@ void SV_LoadGame(int slot)
 
     AssertSegment(ASEG_GAME_HEADER);
 
+    prev_episode = gameepisode; // [crispy]
     gameepisode = 1;
     gamemap = SV_ReadByte();
     gameskill = SV_ReadByte();
@@ -2147,6 +2149,12 @@ void SV_LoadGame(int slot)
     UnarchivePlayers();
 
     AssertSegment(ASEG_END);
+
+    // [crispy] read more extended savegame data for game
+    SV_ReadExtendedSaveGameData(EXTSAVEG_GAME);
+
+    // [crispy] re-init scripts and mapinfo to support multiple episodes
+    H2_InitEpisode(false);
 
     // Save player structs
     for (i = 0; i < maxplayers; i++)
@@ -2568,7 +2576,7 @@ static void ArchiveWorld(void)
         SV_WriteByte(li->arg5);
         for (j = 0; j < 2; j++)
         {
-            if (li->sidenum[j] == -1)
+            if (li->sidenum[j] == NO_INDEX)
             {
                 continue;
             }
@@ -2622,7 +2630,7 @@ static void UnarchiveWorld(void)
         li->arg5 = SV_ReadByte();
         for (j = 0; j < 2; j++)
         {
-            if (li->sidenum[j] == -1)
+            if (li->sidenum[j] == NO_INDEX)
             {
                 continue;
             }

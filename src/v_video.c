@@ -823,9 +823,7 @@ void V_DrawScaledBlock(int x, int y, int width, int height, byte *src)
     pixel_t *dest;
     int i, j;
 
-    x += WIDESCREENDELTA; // [crispy] horizontal widescreen offset
-
-    const int rx = x << crispy->hires;
+    const int rx = (x + WIDESCREENDELTA) << crispy->hires;
     const int ry = y << crispy->hires;
     const int rw = width << crispy->hires;
     const int rh = height << crispy->hires;
@@ -834,6 +832,9 @@ void V_DrawScaledBlock(int x, int y, int width, int height, byte *src)
     int dy0 = ry;
     int dx1 = rx + rw;
     int dy1 = ry + rh;
+
+    int dw, dh;
+    int xoff, yoff;
 
     // Clipping
     if (dx0 < 0)
@@ -853,16 +854,16 @@ void V_DrawScaledBlock(int x, int y, int width, int height, byte *src)
         dy1 = SCREENHEIGHT;
     }
 
-    const int dw = dx1 - dx0;
-    const int dh = dy1 - dy0;
+    dw = dx1 - dx0;
+    dh = dy1 - dy0;
 
     if (dw <= 0 || dh <= 0)
     {
         return;
     }
 
-    const int xoff = dx0 - rx;
-    const int yoff = dy0 - ry;
+    xoff = dx0 - rx;
+    yoff = dy0 - ry;
 
     dest = dest_screen + dy0 * SCREENWIDTH + dx0;
 
@@ -963,9 +964,7 @@ static void V_DrawRawScreen(byte *raw, int size)
 // size is larger than expected, proceed as if it were a patch.
 void V_DrawFullscreenRawOrPatch(lumpindex_t index)
 {
-    patch_t *patch;
-
-    patch = W_CacheLumpNum(index, PU_CACHE);
+    patch_t *patch = W_CacheLumpNum(index, PU_CACHE);
 
     int size = W_LumpLength(index);
 

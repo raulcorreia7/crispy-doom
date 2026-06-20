@@ -27,6 +27,7 @@
 #include "h2def.h"
 #include "ct_chat.h"
 #include "d_iwad.h"
+#include "d_pwad.h" // [crispy] D_LoadHEXDD()
 #include "d_mode.h"
 #include "m_misc.h"
 #include "s_sound.h"
@@ -483,6 +484,7 @@ void D_DoomMain(void)
 
     I_AtExit(D_HexenQuitMessage, false);
     startepisode = 1;
+    gameepisode = prev_episode = startepisode; // [crispy] init gameepisode
     autostart = false;
     startmap = 1;
     gamemode = commercial;
@@ -604,6 +606,17 @@ void D_DoomMain(void)
 
     // Generate the WAD hash table.  Speed things up a bit.
     W_GenerateHashTable();
+
+    //!
+    // @category mod
+    //
+    // Disable automatic loading of HEXDD.WAD (Deathkings)
+    //
+    if (!M_ParmExists("-nosideload") && gamemode != shareware &&
+        !demolumpname[0] && !M_CheckParmWithArgs("-record", 1))
+    {
+        D_LoadHEXDD();
+    }
 
     I_PrintStartupBanner(gamedescription);
 

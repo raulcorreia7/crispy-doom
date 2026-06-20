@@ -1,6 +1,6 @@
 # Crispy Doom with DMCP
 
-This package is a DMCP-enabled Crispy Doom build. It lets you play Doom normally
+This is a Crispy Doom package with DMCP support. It lets you play Doom normally
 and, at the same time, let an AI assistant inspect or control the running game
 through MCP.
 
@@ -14,24 +14,24 @@ compact, structured output and hides verbose schemas.
 Linux:
 
 ```bash
-curl -fL https://github.com/raulcorreia7/crispy-doom/releases/latest/download/crispy-doom-dmcp-linux.tar.gz | tar -xz
-cd crispy-doom-dmcp-linux
+curl -fL https://github.com/raulcorreia7/crispy-doom/releases/latest/download/crispy-doom-linux.tar.gz | tar -xz
+cd crispy-doom-linux
 ./go.sh
 ```
 
 macOS:
 
 ```bash
-curl -fL https://github.com/raulcorreia7/crispy-doom/releases/latest/download/crispy-doom-dmcp-macos.tar.gz | tar -xz
-cd crispy-doom-dmcp-macos
+curl -fL https://github.com/raulcorreia7/crispy-doom/releases/latest/download/crispy-doom-macos.tar.gz | tar -xz
+cd crispy-doom-macos
 ./go.sh
 ```
 
 Windows PowerShell:
 
 ```powershell
-Invoke-WebRequest https://github.com/raulcorreia7/crispy-doom/releases/latest/download/crispy-doom-dmcp-windows.zip -OutFile crispy-doom-dmcp-windows.zip; Expand-Archive crispy-doom-dmcp-windows.zip -DestinationPath . -Force
-cd crispy-doom-dmcp-windows
+Invoke-WebRequest https://github.com/raulcorreia7/crispy-doom/releases/latest/download/crispy-doom-windows.zip -OutFile crispy-doom-windows.zip; Expand-Archive crispy-doom-windows.zip -DestinationPath . -Force
+cd crispy-doom-windows
 .\go.bat
 ```
 

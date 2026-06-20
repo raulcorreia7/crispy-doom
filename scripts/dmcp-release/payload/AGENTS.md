@@ -1,4 +1,4 @@
-# Crispy Doom DMCP Agent Notes
+# Crispy Doom Agent Notes
 
 Start the game with DMCP enabled before using an MCP client:
 

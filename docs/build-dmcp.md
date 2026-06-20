@@ -1,6 +1,6 @@
 # Building Crispy Doom with DMCP
 
-This is the current source-build recipe used by the DMCP release workflow.
+This is the current source-build recipe used by the Crispy Doom release workflow.
 The release keeps the layers explicit:
 
 ```text
@@ -106,7 +106,7 @@ SDK consumers can use the source-stable protocol-name wrappers from
 
 ## Release Packaging
 
-The GitHub release workflow runs for `dmcp-v*` tags. It builds
+The GitHub release workflow runs for `crispy-doom-v*` tags. It builds
 Linux, macOS, and Windows archives, uploads each archive as a workflow artifact,
 then creates the GitHub release from those downloaded artifacts.
 

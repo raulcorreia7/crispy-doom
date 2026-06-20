@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Purpose: Build DMCP and Crispy Doom for one DMCP release platform.
+# Purpose: Build DMCP and Crispy Doom for one Crispy Doom release platform.
 # Dependencies: bash, cmake
 
 set -Eeuo pipefail
@@ -21,7 +21,7 @@ usage() {
 Usage:
   $PROGRAM_NAME --platform linux|macos|windows [OPTIONS]
 
-Build DMCP and Crispy Doom for one DMCP release platform.
+Build DMCP and Crispy Doom for one Crispy Doom release platform.
 
 Options:
       --platform NAME       Target platform: linux, macos, or windows.

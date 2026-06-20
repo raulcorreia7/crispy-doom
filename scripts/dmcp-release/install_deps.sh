@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Purpose: Install platform dependencies for the DMCP release workflow.
+# Purpose: Install platform dependencies for the Crispy Doom release workflow.
 # Dependencies: bash, apt-get on Linux, Homebrew on macOS, vcpkg on Windows
 
 set -Eeuo pipefail
@@ -17,7 +17,7 @@ usage() {
 Usage:
   $PROGRAM_NAME --platform linux|macos|windows
 
-Install platform dependencies for the DMCP release workflow.
+Install platform dependencies for the Crispy Doom release workflow.
 
 Options:
       --platform NAME  Target platform: linux, macos, or windows.

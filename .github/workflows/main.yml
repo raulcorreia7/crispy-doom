@@ -6,7 +6,7 @@ on:
       - "master"
     tags:
       - "*"
-      - "!dmcp-v*"
+      - "!crispy-doom-v*"
     paths-ignore:
       - "**.md"
   pull_request:

@@ -1,5 +1,5 @@
 @echo off
-REM go.bat - Run the DMCP release with a default IWAD
+REM go.bat - Run Crispy Doom with a default IWAD
 
 setlocal
 set "SCRIPT_DIR=%~dp0"
@@ -39,7 +39,7 @@ crispy-doom.exe %*
 exit /b %ERRORLEVEL%
 
 :help
-echo Run crispy-doom from the extracted DMCP release folder.
+echo Run crispy-doom from the extracted Crispy Doom release folder.
 echo.
 echo Usage:
 echo   go.bat [extra args...]

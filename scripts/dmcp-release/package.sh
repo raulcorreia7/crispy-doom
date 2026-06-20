@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Purpose: Assemble and verify one DMCP-enabled Crispy Doom release artifact.
+# Purpose: Assemble and verify one Crispy Doom release artifact with DMCP support.
 # Dependencies: bash, tar on Linux/macOS, 7z on Windows
 
 set -Eeuo pipefail
@@ -32,7 +32,7 @@ usage() {
 Usage:
   $PROGRAM_NAME --platform linux|macos|windows --artifact-name NAME --asset-name FILE [OPTIONS]
 
-Assemble and verify the DMCP-enabled Crispy Doom release artifact.
+Assemble and verify the Crispy Doom release artifact with DMCP support.
 
 Options:
       --platform NAME       Target platform: linux, macos, or windows.

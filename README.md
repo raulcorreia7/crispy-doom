@@ -81,9 +81,9 @@ Many additional less user-visible features have been implemented, e.g. fixed eng
 
 ## Download
 
-* Windows: [Get binaries of the latest DMCP-enabled fork release](https://github.com/raulcorreia7/crispy-doom/releases/latest).
-* MacOS: [Get the latest DMCP-enabled fork release](https://github.com/raulcorreia7/crispy-doom/releases/latest). Upstream Crispy Doom is also available through MacPorts: `sudo port install crispy-doom` or Homebrew: `brew install crispy-doom`.
-* Linux: [Get the latest DMCP-enabled fork release](https://github.com/raulcorreia7/crispy-doom/releases/latest). Upstream Crispy Doom is also available on Ubuntu (“Eoan Ermine” 19.10 and later)/Debian (“Buster” 10 and later) based systems: `sudo apt-get install crispy-doom`
+* Windows: [Get binaries of the latest Crispy Doom fork release](https://github.com/raulcorreia7/crispy-doom/releases/latest).
+* MacOS: [Get the latest Crispy Doom fork release](https://github.com/raulcorreia7/crispy-doom/releases/latest). Upstream Crispy Doom is also available through MacPorts: `sudo port install crispy-doom` or Homebrew: `brew install crispy-doom`.
+* Linux: [Get the latest Crispy Doom fork release](https://github.com/raulcorreia7/crispy-doom/releases/latest). Upstream Crispy Doom is also available on Ubuntu (“Eoan Ermine” 19.10 and later)/Debian (“Buster” 10 and later) based systems: `sudo apt-get install crispy-doom`
 
 
 The most recent list of changes in this fork can be found in the [Changelog](https://github.com/raulcorreia7/crispy-doom/blob/master/CHANGELOG.md).
@@ -94,25 +94,25 @@ http://latest.chocolate-doom.org/
 
 Crispy Doom can play nearly all variants of Doom. If you don't own any, you may download the [Shareware version of Doom](http://cdn.debian.net/debian/pool/non-free/d/doom-wad-shareware/doom-wad-shareware_1.9.fixed.orig.tar.gz), extract it and copy the DOOM1.WAD file into your Crispy Doom directory. Alternatively, you may want to play Crispy Doom with [Freedoom](https://www.chocolate-doom.org/wiki/index.php/Freedoom) and a MegaWAD.
 
-### DMCP-enabled fork builds
+### Crispy Doom Fork Packages
 
 Download the latest release artifact for your OS:
 
 ```bash
-curl -fL https://github.com/raulcorreia7/crispy-doom/releases/latest/download/crispy-doom-dmcp-linux.tar.gz | tar -xz
-cd crispy-doom-dmcp-linux
+curl -fL https://github.com/raulcorreia7/crispy-doom/releases/latest/download/crispy-doom-linux.tar.gz | tar -xz
+cd crispy-doom-linux
 ./go.sh
 ```
 
 ```bash
-curl -fL https://github.com/raulcorreia7/crispy-doom/releases/latest/download/crispy-doom-dmcp-macos.tar.gz | tar -xz
-cd crispy-doom-dmcp-macos
+curl -fL https://github.com/raulcorreia7/crispy-doom/releases/latest/download/crispy-doom-macos.tar.gz | tar -xz
+cd crispy-doom-macos
 ./go.sh
 ```
 
 ```powershell
-Invoke-WebRequest https://github.com/raulcorreia7/crispy-doom/releases/latest/download/crispy-doom-dmcp-windows.zip -OutFile crispy-doom-dmcp-windows.zip; Expand-Archive crispy-doom-dmcp-windows.zip -DestinationPath . -Force
-cd crispy-doom-dmcp-windows
+Invoke-WebRequest https://github.com/raulcorreia7/crispy-doom/releases/latest/download/crispy-doom-windows.zip -OutFile crispy-doom-windows.zip; Expand-Archive crispy-doom-windows.zip -DestinationPath . -Force
+cd crispy-doom-windows
 .\go.bat
 ```
 
@@ -139,7 +139,7 @@ Linux/macOS packages use system SDL2, FluidSynth, png, samplerate, and zlib
 runtime libraries. If the loader reports a missing library, install the runtime
 packages shown in [README.DMCP.md](README.DMCP.md).
 
-For the DMCP-enabled release artifact, agent-ready config files and quickstart,
+For the Crispy Doom release package, agent-ready config files and quickstart,
 see [README.DMCP.md](README.DMCP.md). Source build dependencies and local build
 steps are documented in [docs/build-dmcp.md](docs/build-dmcp.md).
 
@@ -180,7 +180,7 @@ Upstream Crispy Doom documentation:
 
 ## Contact
 
-This DMCP-enabled fork is maintained at https://github.com/raulcorreia7/crispy-doom.
+This Crispy Doom fork with DMCP support is maintained at https://github.com/raulcorreia7/crispy-doom.
 The canonical upstream homepage for Crispy Doom is https://github.com/fabiangreffrath/crispy-doom
 
 Crispy Doom is maintained by [Fabian Greffrath](mailto:fabian@greffXremovethisXrath.com). 

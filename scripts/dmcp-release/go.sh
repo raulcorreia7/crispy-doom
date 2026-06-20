@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# go.sh - Run the DMCP release with a default IWAD
+# go.sh - Run Crispy Doom with a default IWAD
 
 set -euo pipefail
 
 usage() {
 	cat <<'EOF'
-Run crispy-doom from the extracted DMCP release folder.
+Run crispy-doom from the extracted Crispy Doom release folder.
 
 Usage:
   ./go.sh [extra args...]

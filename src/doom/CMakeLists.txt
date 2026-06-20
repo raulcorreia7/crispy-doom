@@ -82,22 +82,7 @@ add_library(doom STATIC
             wi_stuff.c      wi_stuff.h)
 
 target_include_directories(doom PRIVATE "../" "${CMAKE_CURRENT_BINARY_DIR}/../../")
-
-if(DMCP_ENABLE)
-    target_compile_definitions(doom PRIVATE DMCP_STATIC=1)
-    target_include_directories(doom PRIVATE
-        "${DMCP_ADAPTER_DIR}/include"
-        "${DMCP_ROOT}/include"
-        "${DMCP_ROOT}/adapters/common/include"
-        "${DMCP_ROOT}/build"
-        "${CMAKE_CURRENT_SOURCE_DIR}/.."
-        "${CMAKE_CURRENT_SOURCE_DIR}"
-        "${CMAKE_CURRENT_BINARY_DIR}/../.."
-    )
-    file(GLOB DMCP_ADAPTER_SOURCES "${DMCP_ADAPTER_DIR}/src/*.c")
-    list(APPEND DMCP_ADAPTER_SOURCES "${DMCP_ROOT}/adapters/common/src/dmcp_hooks.c")
-    target_sources(doom PRIVATE ${DMCP_ADAPTER_SOURCES})
-endif()
+crispy_dmcp_apply_to_doom(doom)
 
 if (DEFINED EMSCRIPTEN)
     set(SDL_FLAGS "-s USE_SDL=2")
@@ -117,55 +102,7 @@ else()
     endif()
 endif()
 
-if(DMCP_ENABLE)
-    if(WIN32)
-        set(DMCP_LIBRARY_DIRS
-            "${DMCP_ROOT}/build/Release"
-            "${DMCP_ROOT}/build"
-        )
-    else()
-        set(DMCP_LIBRARY_DIRS "${DMCP_ROOT}/build")
-    endif()
-
-    set(DMCP_LINK_LIBS)
-
-    foreach(DMCP_LIBRARY_DIR IN LISTS DMCP_LIBRARY_DIRS)
-        if(WIN32)
-            set(DMCP_SINGLE_LIB "${DMCP_LIBRARY_DIR}/dmcp.lib")
-            set(DMCP_CORE_LIB "${DMCP_LIBRARY_DIR}/dmcp_core.lib")
-            set(DMCP_GENERIC_LIB "${DMCP_LIBRARY_DIR}/dmcp_generic.lib")
-        elseif(APPLE)
-            set(DMCP_SINGLE_LIB "${DMCP_LIBRARY_DIR}/libdmcp.dylib")
-            set(DMCP_CORE_LIB "${DMCP_LIBRARY_DIR}/libdmcp_core.dylib")
-            set(DMCP_GENERIC_LIB "${DMCP_LIBRARY_DIR}/libdmcp_generic.dylib")
-        else()
-            set(DMCP_SINGLE_LIB "${DMCP_LIBRARY_DIR}/libdmcp.so")
-            set(DMCP_CORE_LIB "${DMCP_LIBRARY_DIR}/libdmcp_core.so")
-            set(DMCP_GENERIC_LIB "${DMCP_LIBRARY_DIR}/libdmcp_generic.so")
-        endif()
-
-        if(EXISTS "${DMCP_SINGLE_LIB}")
-            set(DMCP_LINK_LIBS "${DMCP_SINGLE_LIB}")
-            break()
-        endif()
-
-        if(EXISTS "${DMCP_CORE_LIB}" AND EXISTS "${DMCP_GENERIC_LIB}")
-            set(DMCP_LINK_LIBS
-                "${DMCP_CORE_LIB}"
-                "${DMCP_GENERIC_LIB}"
-            )
-            break()
-        endif()
-    endforeach()
-
-    if(NOT DMCP_LINK_LIBS)
-        message(FATAL_ERROR
-            "DMCP libraries not found. Expected either ${DMCP_SINGLE_LIB} or both ${DMCP_CORE_LIB} and ${DMCP_GENERIC_LIB}"
-        )
-    endif()
-
-    list(APPEND SDL_LINK_LIBS ${DMCP_LINK_LIBS})
-endif()
+crispy_dmcp_link_libraries(SDL_LINK_LIBS)
 
 target_link_libraries(doom ${SDL_LINK_LIBS})
 set_target_properties(doom PROPERTIES COMPILE_FLAGS "${SDL_FLAGS}")

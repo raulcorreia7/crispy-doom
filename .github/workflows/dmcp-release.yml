@@ -3,243 +3,94 @@ name: DMCP Release
 on:
   push:
     tags:
-      - 'dmcp-v*'
+      - 'crispy-dmcp-v*'
+  workflow_dispatch:
+
+env:
+  DMCP_DIR: third_party/doom-mcp
+  DMCP_BUILD_DIR: build/dmcp
 
 jobs:
   build:
-    name: Build ${{ matrix.os }}
+    name: Build ${{ matrix.platform }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         include:
           - os: ubuntu-latest
+            platform: linux
             artifact_name: crispy-doom-dmcp-linux
             asset_name: crispy-doom-dmcp-linux.tar.gz
           - os: macos-latest
+            platform: macos
             artifact_name: crispy-doom-dmcp-macos
             asset_name: crispy-doom-dmcp-macos.tar.gz
           - os: windows-latest
+            platform: windows
             artifact_name: crispy-doom-dmcp-windows
             asset_name: crispy-doom-dmcp-windows.zip
 
     steps:
       - name: Checkout crispy-doom
-        uses: actions/checkout@v4
-
-      - name: Checkout DMCP
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
-          repository: raulcorreia7/doom-mcp
-          ref: dev
-          path: dmcp
           submodules: recursive
 
-      - name: Install Linux Dependencies
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            build-essential cmake \
-            libsdl2-dev libsdl2-net-dev libsdl2-mixer-dev \
-            libpng-dev libsamplerate0-dev zlib1g-dev
-
-      - name: Install macOS Dependencies
-        if: matrix.os == 'macos-latest'
-        run: brew install sdl2 sdl2_net sdl2_mixer libpng libsamplerate
-
       - name: Setup MSVC (Windows)
-        if: matrix.os == 'windows-latest'
+        if: matrix.platform == 'windows'
         uses: ilammy/msvc-dev-cmd@v1
 
-      - name: Build DMCP (Linux)
-        if: matrix.os == 'ubuntu-latest'
+      - name: Install dependencies
         shell: bash
-        run: |
-          # Crispy builds its adapter sources natively via DMCP_ADAPTER_DIR.
-          cmake -S dmcp -B dmcp/build \
-            -DDMCP_BUILD_SHARED=ON \
-            -DDMCP_BUILD_SINGLE_DLL=ON \
-            -DDMCP_BUILD_EXAMPLES=OFF \
-            -DDMCP_BUILD_ADAPTER_FAKE=OFF \
-            -DDMCP_BUILD_ADAPTER_ZDOOM=OFF \
-            -DDMCP_BUILD_ADAPTER_CRISPY=OFF \
-            -DCMAKE_BUILD_TYPE=Release
-          cmake --build dmcp/build --config Release -j4
+        run: scripts/dmcp-release/install_deps.sh --platform "${{ matrix.platform }}"
 
-      - name: Build DMCP (macOS)
-        if: matrix.os == 'macos-latest'
+      - name: Build DMCP and Crispy Doom
         shell: bash
-        run: |
-          # Crispy builds its adapter sources natively via DMCP_ADAPTER_DIR.
-          cmake -S dmcp -B dmcp/build \
-            -DDMCP_BUILD_SHARED=ON \
-            -DDMCP_BUILD_SINGLE_DLL=ON \
-            -DDMCP_BUILD_EXAMPLES=OFF \
-            -DDMCP_BUILD_ADAPTER_FAKE=OFF \
-            -DDMCP_BUILD_ADAPTER_ZDOOM=OFF \
-            -DDMCP_BUILD_ADAPTER_CRISPY=OFF \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_CXX_COMPILER=clang++ \
-            -DCMAKE_C_COMPILER=clang \
-            -DCMAKE_SHARED_LINKER_FLAGS="-Wl,-undefined,dynamic_lookup"
-          cmake --build dmcp/build --config Release -j4
+        run: >
+          scripts/dmcp-release/build.sh
+          --platform "${{ matrix.platform }}"
+          --dmcp-dir "${{ env.DMCP_DIR }}"
+          --dmcp-build-dir "${{ env.DMCP_BUILD_DIR }}"
 
-      - name: Build DMCP (Windows)
-        if: matrix.os == 'windows-latest'
-        shell: cmd
-        run: |
-          echo {"dependencies":["zlib","sdl2","libuv"]}> dmcp\vcpkg.json
-          rem Crispy builds its adapter sources natively via DMCP_ADAPTER_DIR.
-          cmake -S dmcp -B dmcp/build ^
-            -DDMCP_BUILD_SHARED=ON ^
-            -DDMCP_BUILD_SINGLE_DLL=ON ^
-            -DDMCP_BUILD_EXAMPLES=OFF ^
-            -DDMCP_BUILD_ADAPTER_FAKE=OFF ^
-            -DDMCP_BUILD_ADAPTER_ZDOOM=OFF ^
-            -DDMCP_BUILD_ADAPTER_CRISPY=OFF ^
-            -DCMAKE_BUILD_TYPE=Release ^
-            -DCMAKE_TOOLCHAIN_FILE="%VCPKG_INSTALLATION_ROOT%\scripts\buildsystems\vcpkg.cmake" ^
-            -DVCPKG_TARGET_TRIPLET=x64-windows
-          cmake --build dmcp/build --config Release -j4
-
-      - name: Configure with DMCP (Linux/macOS)
-        if: matrix.os != 'windows-latest'
+      - name: Package and verify
         shell: bash
-        run: |
-          cmake -B build \
-            -DDMCP_ENABLE=ON \
-            -DDMCP_ROOT="$(pwd)/dmcp" \
-            -DDMCP_ADAPTER_DIR="$(pwd)/dmcp/adapters/crispy-doom" \
-            -DCMAKE_BUILD_TYPE=Release
-
-      - name: Configure with DMCP (Windows)
-        if: matrix.os == 'windows-latest'
-        shell: cmd
-        run: |
-          cmake -B build ^
-            -DDMCP_ENABLE=ON ^
-            -DDMCP_ROOT="%CD%\dmcp" ^
-            -DDMCP_ADAPTER_DIR="%CD%\dmcp\adapters\crispy-doom" ^
-            -DCMAKE_BUILD_TYPE=Release ^
-            -DCMAKE_TOOLCHAIN_FILE="%VCPKG_INSTALLATION_ROOT%\scripts\buildsystems\vcpkg.cmake" ^
-            -DVCPKG_TARGET_TRIPLET=x64-windows ^
-            -DCMAKE_PREFIX_PATH="%VCPKG_INSTALLATION_ROOT%\installed\x64-windows"
-
-      - name: Build
-        shell: bash
-        run: cmake --build build --config Release -j4
-
-      - name: Package (Windows)
-        if: matrix.os == 'windows-latest'
-        shell: bash
-        run: |
-          set -euo pipefail
-          shopt -s nullglob
-          ARTIFACT_DIR="pkg/${{ matrix.artifact_name }}"
-          mkdir -p "$ARTIFACT_DIR/.codex"
-          cp build/src/Release/crispy-doom.exe "$ARTIFACT_DIR/"
-
-          dmcp_dlls=(dmcp/build/Release/dmcp*.dll dmcp/build/dmcp*.dll)
-          if [ ${#dmcp_dlls[@]} -eq 0 ]; then
-            echo "error: DMCP DLLs not found" >&2
-            exit 1
-          fi
-          cp "${dmcp_dlls[@]}" "$ARTIFACT_DIR/"
-
-          engine_dlls=(build/src/Release/*.dll)
-          if [ ${#engine_dlls[@]} -gt 0 ]; then
-            cp "${engine_dlls[@]}" "$ARTIFACT_DIR/"
-          fi
-
-          cp scripts/dmcp-release/go.bat "$ARTIFACT_DIR/"
-          cp scripts/dmcp-release/download_wad.bat "$ARTIFACT_DIR/"
-          cp opencode.json .mcp.json README.DMCP.md "$ARTIFACT_DIR/"
-          cp docs/build-dmcp.md "$ARTIFACT_DIR/BUILDING.md"
-          cp .codex/config.toml "$ARTIFACT_DIR/.codex/config.toml"
-          mv "$ARTIFACT_DIR/README.DMCP.md" "$ARTIFACT_DIR/README.md"
-
-          pushd pkg
-          7z a "../${{ matrix.asset_name }}" "${{ matrix.artifact_name }}"
-          popd
-
-      - name: Verify package contents (Windows)
-        if: matrix.os == 'windows-latest'
-        shell: bash
-        run: |
-          set -euo pipefail
-          rm -rf smoke
-          mkdir -p smoke
-          7z x "${{ matrix.asset_name }}" -osmoke >/dev/null
-          test -f "smoke/${{ matrix.artifact_name }}/crispy-doom.exe"
-          test -f "smoke/${{ matrix.artifact_name }}/README.md"
-          test -f "smoke/${{ matrix.artifact_name }}/BUILDING.md"
-          test -f "smoke/${{ matrix.artifact_name }}/opencode.json"
-          test -f "smoke/${{ matrix.artifact_name }}/.mcp.json"
-          test -f "smoke/${{ matrix.artifact_name }}/.codex/config.toml"
-          compgen -G "smoke/${{ matrix.artifact_name }}/dmcp*.dll" >/dev/null
-
-      - name: Package (Linux/macOS)
-        if: matrix.os != 'windows-latest'
-        shell: bash
-        run: |
-          set -euo pipefail
-          shopt -s nullglob
-          ARTIFACT_DIR="pkg/${{ matrix.artifact_name }}"
-          mkdir -p "$ARTIFACT_DIR/.codex"
-          cp build/src/crispy-doom "$ARTIFACT_DIR/"
-
-          dmcp_libs=(dmcp/build/libdmcp*.so dmcp/build/libdmcp*.dylib)
-          if [ ${#dmcp_libs[@]} -eq 0 ]; then
-            echo "error: DMCP runtime library not found" >&2
-            exit 1
-          fi
-          cp "${dmcp_libs[@]}" "$ARTIFACT_DIR/"
-
-          cp scripts/dmcp-release/go.sh "$ARTIFACT_DIR/"
-          cp scripts/dmcp-release/download_wad.sh "$ARTIFACT_DIR/"
-          cp opencode.json .mcp.json README.DMCP.md "$ARTIFACT_DIR/"
-          cp docs/build-dmcp.md "$ARTIFACT_DIR/BUILDING.md"
-          cp .codex/config.toml "$ARTIFACT_DIR/.codex/config.toml"
-          mv "$ARTIFACT_DIR/README.DMCP.md" "$ARTIFACT_DIR/README.md"
-
-          chmod +x "$ARTIFACT_DIR/go.sh" "$ARTIFACT_DIR/download_wad.sh"
-          tar -czf "${{ matrix.asset_name }}" -C pkg "${{ matrix.artifact_name }}"
-
-      - name: Verify package contents (Linux/macOS)
-        if: matrix.os != 'windows-latest'
-        shell: bash
-        run: |
-          set -euo pipefail
-          rm -rf smoke
-          mkdir -p smoke
-          tar -xzf "${{ matrix.asset_name }}" -C smoke
-          test -f "smoke/${{ matrix.artifact_name }}/crispy-doom"
-          test -f "smoke/${{ matrix.artifact_name }}/README.md"
-          test -f "smoke/${{ matrix.artifact_name }}/BUILDING.md"
-          test -f "smoke/${{ matrix.artifact_name }}/opencode.json"
-          test -f "smoke/${{ matrix.artifact_name }}/.mcp.json"
-          test -f "smoke/${{ matrix.artifact_name }}/.codex/config.toml"
-          compgen -G "smoke/${{ matrix.artifact_name }}/libdmcp*.so" >/dev/null || \
-            compgen -G "smoke/${{ matrix.artifact_name }}/libdmcp*.dylib" >/dev/null
+        run: >
+          scripts/dmcp-release/package.sh
+          --platform "${{ matrix.platform }}"
+          --artifact-name "${{ matrix.artifact_name }}"
+          --asset-name "${{ matrix.asset_name }}"
+          --release-tag "${{ github.ref_name }}"
+          --dmcp-dir "${{ env.DMCP_DIR }}"
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.artifact_name }}
           path: ${{ matrix.asset_name }}
+          if-no-files-found: error
 
   release:
+    if: startsWith(github.ref, 'refs/tags/crispy-dmcp-v')
     needs: build
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
-      - uses: actions/download-artifact@v4
-      - uses: softprops/action-gh-release@v1
+      - name: Checkout release scripts
+        uses: actions/checkout@v7
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v8
         with:
-          files: |
-            */*.tar.gz
-            */*.zip
+          path: dist
+
+      - name: Create GitHub release
+        shell: bash
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+        run: >
+          scripts/dmcp-release/publish_release.sh
+          --tag "${{ github.ref_name }}"
+          --artifacts-dir dist
+          --title "Crispy Doom DMCP ${{ github.ref_name }}"

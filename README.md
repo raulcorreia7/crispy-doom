@@ -1,4 +1,48 @@
 # Crispy Doom
+
+This repository is a fork of upstream [Crispy Doom](https://github.com/fabiangreffrath/crispy-doom)
+with [DMCP](README.DMCP.md) support, so agents can inspect and control a
+running Doom game through MCP. Demo: <https://www.youtube.com/watch?v=G82a40hI-H8>.
+
+[![DMCP Crispy Doom demo](https://img.youtube.com/vi/G82a40hI-H8/hqdefault.jpg)](https://www.youtube.com/watch?v=G82a40hI-H8)
+
+## DMCP Quick Start
+
+Download the latest DMCP-enabled release for your OS, then start the game:
+
+```bash
+./go.sh
+```
+
+On Windows, run:
+
+```powershell
+.\go.bat
+```
+
+The release does not bundle WAD files. The launcher can download the Doom
+shareware IWAD, or you can put your own IWAD beside the executable and run
+`crispy-doom -iwad ./doom1.wad`.
+
+DMCP listens at `http://localhost:6060/mcp` by default. For CLI agents, prefer
+the bundled Python `dmcp-agent` helper before calling MCP tools directly; it
+returns compact, structured summaries and keeps prompts token-efficient. Use raw
+MCP when you need low-level debugging or custom client integration.
+
+The release archive includes ready-to-use config files for common clients:
+
+| Client | Use |
+|--------|-----|
+| Codex | Use `cd agents/python && uv run dmcp-agent --pretty brief`; raw MCP preset: `agent-presets/codex/config.toml`. |
+| Claude Code | Use `cd agents/python && uv run dmcp-agent --pretty brief`; raw MCP preset: `agent-presets/claude/mcp.json`. |
+| OpenCode | Use `cd agents/python && uv run dmcp-agent --pretty brief`; raw MCP preset: `agent-presets/opencode/opencode.json`. |
+| Pi | Use `cd agents/python && uv run dmcp-agent --pretty brief`; raw MCP preset: `agent-presets/pi/mcp.json`. |
+| Generic MCP clients | Use `agent-presets/generic/mcp.json`. |
+| Python CLI agent | Run `cd agents/python && uv run dmcp-agent --pretty brief`. |
+
+See [README.DMCP.md](README.DMCP.md) for platform downloads, config examples,
+and CLI-agent commands.
+
 [![Crispy Doom Icon](https://github.com/fabiangreffrath/crispy-doom/blob/master/data/doom.png)](https://github.com/fabiangreffrath/crispy-doom)
 
 [![Top Language](https://img.shields.io/github/languages/top/fabiangreffrath/crispy-doom.svg)](https://github.com/fabiangreffrath/crispy-doom)
@@ -81,9 +125,8 @@ Latest release quickstart:
 curl -L https://github.com/raulcorreia7/crispy-doom/releases/latest/download/crispy-doom-dmcp-linux.tar.gz | tar -xz
 ```
 
-The release artifact includes preconfigured agent files, so after you run the
-game you can open the extracted folder in OpenCode, Claude Code, or Codex and
-interact with `crispy-doom` through MCP immediately.
+The release artifact includes raw MCP presets under `agent-presets/` and the
+token-efficient Python helper under `agents/python`.
 
 For the DMCP-enabled release artifact, agent-ready config files and quickstart,
 see [README.DMCP.md](README.DMCP.md). Source build dependencies and local build

@@ -1,3 +1,6 @@
 [submodule "quickcheck"]
 	path = quickcheck
 	url = https://github.com/chocolate-doom/quickcheck.git
+[submodule "third_party/doom-mcp"]
+	path = third_party/doom-mcp
+	url = https://github.com/raulcorreia7/doom-mcp.git

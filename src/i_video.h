@@ -74,6 +74,7 @@ extern fixed_t fractionaltic;
 
 void I_UpdateNoBlit (void);
 void I_FinishUpdate (void);
+void I_RenderReadPixels(byte **data, int *w, int *h, int *p);
 
 void I_ReadScreen (pixel_t* scr);
 

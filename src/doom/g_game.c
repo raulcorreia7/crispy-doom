@@ -51,7 +51,7 @@
 #include "d_main.h"
 
 #ifdef DMCP
-#include "dmcp_integration.h"
+#include "engine_hooks.h"
 #endif
 
 #include "wi_stuff.h"

@@ -1151,8 +1151,6 @@ void WritePNGfile(char *filename, pixel_t *data,
 //  int w_factor, h_factor;
     byte *rowbuf;
 
-    extern void I_RenderReadPixels(byte **data, int *w, int *h, int *p);
-
 /*
     if (aspect_ratio_correct == 1)
     {

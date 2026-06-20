@@ -102,8 +102,6 @@ else()
     endif()
 endif()
 
-crispy_dmcp_link_libraries(SDL_LINK_LIBS)
-
 target_link_libraries(doom ${SDL_LINK_LIBS})
 set_target_properties(doom PROPERTIES COMPILE_FLAGS "${SDL_FLAGS}")
 set_target_properties(doom PROPERTIES LINK_FLAGS "${SDL_FLAGS}")

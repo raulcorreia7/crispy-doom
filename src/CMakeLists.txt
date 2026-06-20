@@ -166,6 +166,9 @@ if(WIN32)
 	list(APPEND EXTRA_LIBS winmm shlwapi)
 endif()
 
+set(DOOM_EXTRA_LIBS ${EXTRA_LIBS})
+crispy_dmcp_link_libraries(DOOM_EXTRA_LIBS)
+
 function(configure_local_runtime_path target_name)
     if(APPLE)
         set(runtime_path "@loader_path")
@@ -188,7 +191,7 @@ else()
 endif()
 
 target_include_directories("${PROGRAM_PREFIX}doom" PRIVATE ${GAME_INCLUDE_DIRS})
-target_link_libraries("${PROGRAM_PREFIX}doom" doom ${EXTRA_LIBS})
+target_link_libraries("${PROGRAM_PREFIX}doom" doom ${DOOM_EXTRA_LIBS})
 set_target_properties("${PROGRAM_PREFIX}doom" PROPERTIES COMPILE_FLAGS "${SDL_FLAGS}")
 if(DMCP_ENABLE)
     configure_local_runtime_path("${PROGRAM_PREFIX}doom")

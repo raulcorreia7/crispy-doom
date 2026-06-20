@@ -6,6 +6,8 @@ setlocal enabledelayedexpansion
 set "OUT_FILE=.\doom1.wad"
 set "FORCE=0"
 set "POSITIONAL_OUTPUT="
+set "DOOM1_WAD_SHA256=1d7d43be501e67d927e415e0b8f3e29c3bf33075e859721816f652a526cac771"
+set "DOOM1_WAD_SIZE=4196020"
 
 :parse
 if "%~1"=="" goto parsed
@@ -72,26 +74,29 @@ if defined POSITIONAL_OUTPUT (
 for %%F in ("%OUT_FILE%") do set "OUT_DIR=%%~dpF"
 if not exist "%OUT_DIR%" mkdir "%OUT_DIR%"
 
-if "%FORCE%"=="1" del "%OUT_FILE%" 2>nul
-
 if exist "%OUT_FILE%" (
-    for %%F in ("%OUT_FILE%") do set "SIZE=%%~zF"
-    if !SIZE! GEQ 4000000 (
+    call :valid_wad "%OUT_FILE%"
+    if not errorlevel 1 (
         echo doom1.wad already exists: %OUT_FILE%
         exit /b 0
+    )
+    if not "%FORCE%"=="1" (
+        echo error: existing file does not match the expected Doom shareware IWAD: %OUT_FILE%
+        echo Use -f to replace it, or set DOOM_WAD/pass -iwad to use a different IWAD.
+        exit /b 1
     )
     del "%OUT_FILE%" 2>nul
 )
 
 set "URL1=https://distro.ibiblio.org/slitaz/sources/packages/d/doom1.wad"
-set "URL2=https://raw.githubusercontent.com/Doom-Utils/shareware-collection/master/Doom%%201.0/doom1.wad"
-set "URL3=https://archive.org/download/DoomsharewareEpisode/doom1.wad"
+set "ARCHIVE_URL=https://deb.debian.org/debian/pool/non-free/d/doom-wad-shareware/doom-wad-shareware_1.9.fixed.orig.tar.gz"
 
 echo Downloading doom1.wad...
-for %%U in ("%URL1%" "%URL2%" "%URL3%") do (
+for %%U in ("%URL1%") do (
     powershell -NoProfile -ExecutionPolicy Bypass -Command "try { Invoke-WebRequest -UseBasicParsing -Uri '%%~U' -OutFile '%OUT_FILE%' } catch { exit 1 }" >nul 2>&1
     if exist "%OUT_FILE%" (
-        for %%F in ("%OUT_FILE%") do if %%~zF GEQ 4000000 (
+        call :valid_wad "%OUT_FILE%"
+        if not errorlevel 1 (
             echo Downloaded: %OUT_FILE%
             exit /b 0
         )
@@ -99,8 +104,48 @@ for %%U in ("%URL1%" "%URL2%" "%URL3%") do (
     del "%OUT_FILE%" 2>nul
 )
 
-echo error: failed to download doom1.wad
+call :download_archive
+if not errorlevel 1 exit /b 0
+
+echo error: failed to download a checksum-verified doom1.wad
 exit /b 1
+
+:valid_wad
+if not exist "%~1" exit /b 1
+for %%F in ("%~1") do if not "%%~zF"=="%DOOM1_WAD_SIZE%" exit /b 1
+set "HASH="
+for /f "usebackq tokens=* delims=" %%H in (`powershell -NoProfile -ExecutionPolicy Bypass -Command "(Get-FileHash -Algorithm SHA256 -Path '%~1').Hash.ToLowerInvariant()"`) do set "HASH=%%H"
+if /I not "%HASH%"=="%DOOM1_WAD_SHA256%" exit /b 1
+exit /b 0
+
+:download_archive
+set "TMP_DIR=%OUT_DIR%doom-shareware-%RANDOM%%RANDOM%"
+set "TMP_ARCHIVE=%TMP_DIR%\doom-shareware.tar.gz"
+mkdir "%TMP_DIR%" >nul 2>&1
+if errorlevel 1 exit /b 1
+powershell -NoProfile -ExecutionPolicy Bypass -Command "try { Invoke-WebRequest -UseBasicParsing -Uri '%ARCHIVE_URL%' -OutFile '%TMP_ARCHIVE%' } catch { exit 1 }" >nul 2>&1
+if errorlevel 1 (
+    rmdir /s /q "%TMP_DIR%" 2>nul
+    exit /b 1
+)
+tar -xzf "%TMP_ARCHIVE%" -C "%TMP_DIR%" >nul 2>&1
+if errorlevel 1 (
+    rmdir /s /q "%TMP_DIR%" 2>nul
+    exit /b 1
+)
+for /r "%TMP_DIR%" %%F in (doom1.wad) do (
+    copy /y "%%F" "%OUT_FILE%" >nul
+    goto archive_copied
+)
+:archive_copied
+rmdir /s /q "%TMP_DIR%" 2>nul
+call :valid_wad "%OUT_FILE%"
+if errorlevel 1 (
+    del "%OUT_FILE%" 2>nul
+    exit /b 1
+)
+echo Downloaded: %OUT_FILE%
+exit /b 0
 
 :help
 echo Download doom1.wad into the current folder or a custom path.

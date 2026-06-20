@@ -82,6 +82,7 @@ function(crispy_dmcp_apply_to_doom target)
         "${DMCP_ADAPTER_DIR}/include"
         "${DMCP_ROOT}/include"
         "${DMCP_ROOT}/adapters/common/include"
+        "${DMCP_BUILD_DIR}/generated/include"
         "${DMCP_BUILD_DIR}"
         "${DMCP_ROOT}/build"
         "${CMAKE_CURRENT_SOURCE_DIR}/.."

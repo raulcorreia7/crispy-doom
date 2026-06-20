@@ -3,17 +3,33 @@ name: cppcheck
 on:
   pull_request:
     types: [opened, reopened, synchronize]
+    paths-ignore:
+      - "**.md"
+      - "**.yml"
+      - "**.yaml"
   push:
     branches:
       - master
+    paths-ignore:
+      - "**.md"
+      - "**.yml"
+      - "**.yaml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
   cppcheck:
     runs-on: ubuntu-22.04
+    timeout-minutes: 20
 
     steps:
       - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install cppcheck
+        run: sudo apt-get update && sudo apt-get install -y cppcheck
 
       - uses: actions/checkout@v6
 

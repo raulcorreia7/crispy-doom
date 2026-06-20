@@ -1,59 +1,36 @@
 # Crispy Doom
 
-This repository is a fork of upstream [Crispy Doom](https://github.com/fabiangreffrath/crispy-doom)
-with [DMCP](README.DMCP.md) support, so agents can inspect and control a
-running Doom game through MCP. Demo: <https://www.youtube.com/watch?v=G82a40hI-H8>.
+<p align="center">
+  <a href="https://github.com/raulcorreia7/crispy-doom">
+    <img src="https://raw.githubusercontent.com/raulcorreia7/crispy-doom/master/data/doom.png" alt="Crispy Doom icon">
+  </a>
+</p>
 
-[![DMCP Crispy Doom demo](https://img.youtube.com/vi/G82a40hI-H8/hqdefault.jpg)](https://www.youtube.com/watch?v=G82a40hI-H8)
+<p align="center">
+  <a href="https://github.com/raulcorreia7/crispy-doom"><img src="https://img.shields.io/github/languages/top/raulcorreia7/crispy-doom.svg" alt="Top Language"></a>
+  <a href="https://github.com/raulcorreia7/crispy-doom"><img src="https://img.shields.io/github/languages/code-size/raulcorreia7/crispy-doom.svg" alt="Code Size"></a>
+  <a href="https://github.com/raulcorreia7/crispy-doom/blob/master/COPYING.md"><img src="https://img.shields.io/github/license/raulcorreia7/crispy-doom.svg?logo=gnu" alt="License"></a>
+  <a href="https://github.com/raulcorreia7/crispy-doom/releases"><img src="https://img.shields.io/github/release/raulcorreia7/crispy-doom.svg" alt="Release"></a>
+  <a href="https://github.com/raulcorreia7/crispy-doom/releases"><img src="https://img.shields.io/github/release-date/raulcorreia7/crispy-doom.svg" alt="Release Date"></a>
+  <a href="https://github.com/raulcorreia7/crispy-doom/releases"><img src="https://img.shields.io/github/downloads/raulcorreia7/crispy-doom/latest/total.svg" alt="Downloads"></a>
+  <a href="https://github.com/raulcorreia7/crispy-doom/commits/master"><img src="https://img.shields.io/github/commits-since/raulcorreia7/crispy-doom/latest.svg" alt="Commits Since Release"></a>
+  <a href="https://github.com/raulcorreia7/crispy-doom/commits/master"><img src="https://img.shields.io/github/last-commit/raulcorreia7/crispy-doom.svg" alt="Last Commit"></a>
+  <a href="https://github.com/raulcorreia7/crispy-doom/actions/workflows/main.yml"><img src="https://github.com/raulcorreia7/crispy-doom/actions/workflows/main.yml/badge.svg" alt="Build Status"></a>
+</p>
 
-## DMCP Quick Start
+<p align="center">
+  This fork tracks upstream <a href="https://github.com/fabiangreffrath/crispy-doom">Crispy Doom</a>
+  and adds <a href="https://github.com/raulcorreia7/crispy-doom/blob/master/README.DMCP.md">DMCP</a>
+  support so agents can inspect and control a running Doom game through MCP.
+</p>
 
-Download the latest DMCP-enabled release for your OS, then start the game:
-
-```bash
-./go.sh
-```
-
-On Windows, run:
-
-```powershell
-.\go.bat
-```
-
-The release does not bundle WAD files. The launcher can download the Doom
-shareware IWAD, or you can put your own IWAD beside the executable and run
-`crispy-doom -iwad ./doom1.wad`.
-
-DMCP listens at `http://localhost:6060/mcp` by default. For CLI agents, prefer
-the bundled Python `dmcp-agent` helper before calling MCP tools directly; it
-returns compact, structured summaries and keeps prompts token-efficient. Use raw
-MCP when you need low-level debugging or custom client integration.
-
-The release archive includes ready-to-use config files for common clients:
-
-| Client | Use |
-|--------|-----|
-| Codex | Use `cd agents/python && uv run dmcp-agent --pretty brief`; raw MCP preset: `agent-presets/codex/config.toml`. |
-| Claude Code | Use `cd agents/python && uv run dmcp-agent --pretty brief`; raw MCP preset: `agent-presets/claude/mcp.json`. |
-| OpenCode | Use `cd agents/python && uv run dmcp-agent --pretty brief`; raw MCP preset: `agent-presets/opencode/opencode.json`. |
-| Pi | Use `cd agents/python && uv run dmcp-agent --pretty brief`; raw MCP preset: `agent-presets/pi/mcp.json`. |
-| Generic MCP clients | Use `agent-presets/generic/mcp.json`. |
-| Python CLI agent | Run `cd agents/python && uv run dmcp-agent --pretty brief`. |
-
-See [README.DMCP.md](README.DMCP.md) for platform downloads, config examples,
-and CLI-agent commands.
-
-[![Crispy Doom Icon](https://github.com/fabiangreffrath/crispy-doom/blob/master/data/doom.png)](https://github.com/fabiangreffrath/crispy-doom)
-
-[![Top Language](https://img.shields.io/github/languages/top/fabiangreffrath/crispy-doom.svg)](https://github.com/fabiangreffrath/crispy-doom)
-[![Code Size](https://img.shields.io/github/languages/code-size/fabiangreffrath/crispy-doom.svg)](https://github.com/fabiangreffrath/crispy-doom)
-[![License](https://img.shields.io/github/license/fabiangreffrath/crispy-doom.svg?logo=gnu)](https://github.com/fabiangreffrath/crispy-doom/blob/master/COPYING.md)
-[![Release](https://img.shields.io/github/release/fabiangreffrath/crispy-doom.svg)](https://github.com/fabiangreffrath/crispy-doom/releases)
-[![Release Date](https://img.shields.io/github/release-date/fabiangreffrath/crispy-doom.svg)](https://github.com/fabiangreffrath/crispy-doom/releases)
-[![Downloads](https://img.shields.io/github/downloads/fabiangreffrath/crispy-doom/latest/total.svg)](https://github.com/fabiangreffrath/crispy-doom/releases)
-[![Commits](https://img.shields.io/github/commits-since/fabiangreffrath/crispy-doom/latest.svg)](https://github.com/fabiangreffrath/crispy-doom/commits/master)
-[![Last Commit](https://img.shields.io/github/last-commit/fabiangreffrath/crispy-doom.svg)](https://github.com/fabiangreffrath/crispy-doom/commits/master)
-[![Build Status](https://github.com/fabiangreffrath/crispy-doom/actions/workflows/main.yml/badge.svg)](https://github.com/fabiangreffrath/crispy-doom/actions/workflows/main.yml)
+<p align="center">
+  <a href="https://www.youtube.com/watch?v=G82a40hI-H8">
+    <img src="https://img.youtube.com/vi/G82a40hI-H8/hqdefault.jpg" alt="DMCP Crispy Doom demo" width="480">
+  </a>
+  <br>
+  Demo: <a href="https://www.youtube.com/watch?v=G82a40hI-H8">https://www.youtube.com/watch?v=G82a40hI-H8</a>
+</p>
 
 Crispy Doom is a limit-removing enhanced-resolution Doom source port based on [Chocolate Doom](https://www.chocolate-doom.org/wiki/index.php/Chocolate_Doom).
 
@@ -104,43 +81,81 @@ Many additional less user-visible features have been implemented, e.g. fixed eng
 
 ## Download
 
-* Windows: [Get binaries of the latest release](https://github.com/fabiangreffrath/crispy-doom/releases/latest), compatible with both x86 and x64 editions.
-* MacOS: Use MacPorts: `sudo port install crispy-doom` or Homebrew: `brew install crispy-doom`.
-* Linux: To install on Ubuntu (“Eoan Ermine” 19.10 and later)/Debian (“Buster” 10 and later) based systems: `sudo apt-get install crispy-doom`
+* Windows: [Get binaries of the latest DMCP-enabled fork release](https://github.com/raulcorreia7/crispy-doom/releases/latest).
+* MacOS: [Get the latest DMCP-enabled fork release](https://github.com/raulcorreia7/crispy-doom/releases/latest). Upstream Crispy Doom is also available through MacPorts: `sudo port install crispy-doom` or Homebrew: `brew install crispy-doom`.
+* Linux: [Get the latest DMCP-enabled fork release](https://github.com/raulcorreia7/crispy-doom/releases/latest). Upstream Crispy Doom is also available on Ubuntu (“Eoan Ermine” 19.10 and later)/Debian (“Buster” 10 and later) based systems: `sudo apt-get install crispy-doom`
 
 
-The most recent list of changes can be found in the [Changelog](https://github.com/fabiangreffrath/crispy-doom/blob/master/CHANGELOG.md).
-A complete history of changes and releases can be found in the [Wiki](https://github.com/fabiangreffrath/crispy-doom/wiki/Changelog-History) or on the [Releases](https://github.com/fabiangreffrath/crispy-doom/releases) page.
+The most recent list of changes in this fork can be found in the [Changelog](https://github.com/raulcorreia7/crispy-doom/blob/master/CHANGELOG.md).
+A complete upstream history of changes and releases can be found in the [upstream Wiki](https://github.com/fabiangreffrath/crispy-doom/wiki/Changelog-History), and fork releases are published on the [Releases](https://github.com/raulcorreia7/crispy-doom/releases) page.
 
 Daily builds of Crispy Doom can be found here:
 http://latest.chocolate-doom.org/
 
 Crispy Doom can play nearly all variants of Doom. If you don't own any, you may download the [Shareware version of Doom](http://cdn.debian.net/debian/pool/non-free/d/doom-wad-shareware/doom-wad-shareware_1.9.fixed.orig.tar.gz), extract it and copy the DOOM1.WAD file into your Crispy Doom directory. Alternatively, you may want to play Crispy Doom with [Freedoom](https://www.chocolate-doom.org/wiki/index.php/Freedoom) and a MegaWAD.
 
-### DMCP builds
+### DMCP-enabled fork builds
 
-Latest release quickstart:
+Download the latest release artifact for your OS:
 
 ```bash
 curl -L https://github.com/raulcorreia7/crispy-doom/releases/latest/download/crispy-doom-dmcp-linux.tar.gz | tar -xz
+cd crispy-doom-dmcp-linux
+./go.sh
 ```
 
-The release artifact includes raw MCP presets under `agent-presets/` and the
-token-efficient Python helper under `agents/python`.
+```bash
+curl -L https://github.com/raulcorreia7/crispy-doom/releases/latest/download/crispy-doom-dmcp-macos.tar.gz | tar -xz
+cd crispy-doom-dmcp-macos
+./go.sh
+```
+
+```powershell
+Invoke-WebRequest https://github.com/raulcorreia7/crispy-doom/releases/latest/download/crispy-doom-dmcp-windows.zip -OutFile crispy-doom-dmcp-windows.zip; Expand-Archive crispy-doom-dmcp-windows.zip -DestinationPath . -Force
+cd crispy-doom-dmcp-windows
+.\go.bat
+```
+
+The release artifact includes launch scripts, raw MCP presets under
+`agent-presets/`, and the token-efficient Python helper under `agents/python`.
+The `go.sh` / `go.bat` launcher auto-downloads the checksum-verified Doom
+shareware IWAD if `doom1.wad` is missing. Put another IWAD beside the executable
+or set `DOOM_WAD` when you want a different game data file.
+
+DMCP listens at `http://localhost:6060/mcp` by default. For CLI agents, prefer
+the bundled Python `dmcp-agent` helper before calling MCP tools directly:
+
+```bash
+./dmcp-agent --pretty brief
+./dmcp-agent --pretty content enemies
+./dmcp-agent spawn DoomImp --x 160 --y 96
+```
+
+On Windows use `.\dmcp-agent.bat`. The helper requires `uv`; install it from
+<https://docs.astral.sh/uv/> if the launcher reports it is missing.
+
+Linux/macOS packages use system SDL2, FluidSynth, png, samplerate, and zlib
+runtime libraries. If the loader reports a missing library, install the runtime
+packages shown in [README.DMCP.md](README.DMCP.md).
 
 For the DMCP-enabled release artifact, agent-ready config files and quickstart,
 see [README.DMCP.md](README.DMCP.md). Source build dependencies and local build
 steps are documented in [docs/build-dmcp.md](docs/build-dmcp.md).
 
 ### Sources
-[![Open Hub](https://www.openhub.net/p/crispy-doom/widgets/project_thin_badge?style=flat&format=gif)](https://www.openhub.net/p/crispy-doom)
 
-The Crispy Doom source code is available at GitHub: https://github.com/fabiangreffrath/crispy-doom.
-It can be [downloaded in either ZIP or TAR.GZ format](https://github.com/fabiangreffrath/crispy-doom/releases) 
+<p align="center">
+  <a href="https://www.openhub.net/p/crispy-doom">
+    <img src="https://www.openhub.net/p/crispy-doom/widgets/project_thin_badge?style=flat&amp;format=gif" alt="Open Hub">
+  </a>
+</p>
+
+This fork's source code is available at GitHub: https://github.com/raulcorreia7/crispy-doom.
+It can be [downloaded in either ZIP or TAR.GZ format](https://github.com/raulcorreia7/crispy-doom/releases)
 or cloned via
 
 ```
- git clone https://github.com/fabiangreffrath/crispy-doom.git
+ git clone --recurse-submodules https://github.com/raulcorreia7/crispy-doom.git
 ```
 
 
@@ -149,6 +164,11 @@ or cloned via
 
 
 ## Documentation
+
+ * **[DMCP Quick Start and agent presets](README.DMCP.md)**
+ * **[DMCP source build dependencies](docs/build-dmcp.md)**
+
+Upstream Crispy Doom documentation:
 
  * **[New Cheat Codes](https://github.com/fabiangreffrath/crispy-doom/wiki/New-Cheats)**
  * **[New Command-Line Parameters](https://github.com/fabiangreffrath/crispy-doom/wiki/New-Command-line-Parameters)**
@@ -159,11 +179,12 @@ or cloned via
 
 ## Contact
 
-The canonical homepage for Crispy Doom is https://github.com/fabiangreffrath/crispy-doom
+This DMCP-enabled fork is maintained at https://github.com/raulcorreia7/crispy-doom.
+The canonical upstream homepage for Crispy Doom is https://github.com/fabiangreffrath/crispy-doom
 
 Crispy Doom is maintained by [Fabian Greffrath](mailto:fabian@greffXremovethisXrath.com). 
 
-Please report any bugs, glitches or crashes that you encounter to the GitHub [Issue Tracker](https://github.com/fabiangreffrath/crispy-doom/issues).
+Please report bugs, glitches or crashes in this fork to the fork's GitHub [Issue Tracker](https://github.com/raulcorreia7/crispy-doom/issues). Upstream-only Crispy Doom issues should be checked against the upstream project first.
 
 ## Acknowledgement
 

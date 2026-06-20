@@ -213,10 +213,12 @@ copy_release_files() {
   if is_windows; then
     copy_file "$REPO_ROOT/scripts/dmcp-release/go.bat" "$artifact_dir/go.bat"
     copy_file "$REPO_ROOT/scripts/dmcp-release/download_wad.bat" "$artifact_dir/download_wad.bat"
+    copy_file "$REPO_ROOT/scripts/dmcp-release/dmcp-agent.bat" "$artifact_dir/dmcp-agent.bat"
   else
     copy_file "$REPO_ROOT/scripts/dmcp-release/go.sh" "$artifact_dir/go.sh"
     copy_file "$REPO_ROOT/scripts/dmcp-release/download_wad.sh" "$artifact_dir/download_wad.sh"
-    chmod +x "$artifact_dir/go.sh" "$artifact_dir/download_wad.sh"
+    copy_file "$REPO_ROOT/scripts/dmcp-release/dmcp-agent.sh" "$artifact_dir/dmcp-agent"
+    chmod +x "$artifact_dir/go.sh" "$artifact_dir/download_wad.sh" "$artifact_dir/dmcp-agent"
   fi
 
   copy_file "$REPO_ROOT/README.DMCP.md" "$artifact_dir/README.md"

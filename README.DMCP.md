@@ -1,16 +1,13 @@
 # Crispy Doom with DMCP
 
-DMCP-enabled `crispy-doom` build with ready-to-use agent config files.
-DMCP exposes the running game to MCP clients through one bundled shared runtime
-while keeping the code organized into clear layers:
+This package is a DMCP-enabled Crispy Doom build. It lets you play Doom normally
+and, at the same time, let an AI assistant inspect or control the running game
+through MCP.
 
-```text
-Crispy Doom -> Crispy adapter -> Doom MCP -> Generic MCP -> core API/runtime
-```
-
-The boundary from Crispy into DMCP is C-compatible. C++ consumers of the SDK use
-the source-stable protocol-name wrappers in `include/dmcp/doom/protocol.h` from
-the `doom-mcp` repository.
+DMCP runs locally at `http://localhost:6060/mcp` by default. For Codex,
+OpenCode, Claude Code, Pi, and similar tools, use the bundled `dmcp-agent`
+helper first. It is easier for models to use than raw MCP because it returns
+compact, structured output and hides verbose schemas.
 
 ## Quick Start
 
@@ -18,51 +15,109 @@ Linux:
 
 ```bash
 curl -L https://github.com/raulcorreia7/crispy-doom/releases/latest/download/crispy-doom-dmcp-linux.tar.gz | tar -xz
+cd crispy-doom-dmcp-linux
+./go.sh
 ```
 
 macOS:
 
 ```bash
 curl -L https://github.com/raulcorreia7/crispy-doom/releases/latest/download/crispy-doom-dmcp-macos.tar.gz | tar -xz
+cd crispy-doom-dmcp-macos
+./go.sh
 ```
 
-Windows (PowerShell):
+Windows PowerShell:
 
 ```powershell
 Invoke-WebRequest https://github.com/raulcorreia7/crispy-doom/releases/latest/download/crispy-doom-dmcp-windows.zip -OutFile crispy-doom-dmcp-windows.zip; Expand-Archive crispy-doom-dmcp-windows.zip -DestinationPath . -Force
+cd crispy-doom-dmcp-windows
+.\go.bat
 ```
 
-Then:
+`go.sh` / `go.bat` starts the game. If `doom1.wad` is missing, it downloads the
+checksum-verified Doom shareware IWAD. You can also set `DOOM_WAD` or pass
+`-iwad` to use your own IWAD.
 
-1. Put an IWAD in the extracted folder, or run `./download_wad.sh` / `download_wad.bat`.
-2. Run `./crispy-doom -iwad ./doom1.wad`.
-3. `./go.sh` / `go.bat` is the convenience path and auto-downloads `doom1.wad`
-   if it is missing.
-4. Prefer the bundled Python helper for CLI agents:
-   ```bash
-   cd agents/python
-   uv run dmcp-agent --pretty brief
-   uv run dmcp-agent --pretty content enemies
-   uv run dmcp-agent spawn DoomImp --x 160 --y 96
-   ```
-5. Use the preset for your agent tool when you need raw MCP access:
-   - Codex uses `agent-presets/codex/config.toml`
-   - OpenCode uses `agent-presets/opencode/opencode.json`
-   - Claude Code uses `agent-presets/claude/mcp.json`
-   - Pi uses `agent-presets/pi/mcp.json`
-   - Generic MCP clients use `agent-presets/generic/mcp.json`
+Keep the game running. Open a second terminal in the extracted package folder
+for AI interaction.
 
-MCP runs on `http://localhost:6060/mcp` by default.
+## For Players
 
-For Codex, OpenCode, Claude Code, and similar CLI agents, use `dmcp-agent`
-first. It wraps the MCP tools in compact, structured commands so the model does
-not need to spend tokens discovering schemas or repeating verbose payloads. Use
-direct MCP only for custom clients, debugging, or when you need a tool the helper
-does not expose yet.
+Recommended path:
 
-## Included MCP Configs
+```bash
+./dmcp-agent --pretty brief
+./dmcp-agent --pretty content enemies
+./dmcp-agent --pretty read player
+./dmcp-agent --pretty read enemies --status alive --limit 8
+```
 
-Codex:
+Once a level is loaded, try controlled actions:
+
+```bash
+./dmcp-agent spawn DoomImp --x 160 --y 96
+./dmcp-agent give Shotgun --amount 1
+./dmcp-agent give-many --items-json '[{"item_class":"Shotgun","amount":1},{"item_class":"Shells","amount":20}]'
+./dmcp-agent weapon 3
+./dmcp-agent input-plan forward --ticks 8
+./dmcp-agent level E1M2 --skill-level 3
+```
+
+On Windows, use `.\dmcp-agent.bat` instead of `./dmcp-agent`.
+
+The helper requires `uv`. Install it from <https://docs.astral.sh/uv/> if the
+launcher reports it is missing.
+
+## Agent CLI
+
+Use `dmcp-agent` when you are asking a coding or chat agent to play with the
+game. It keeps commands stable and compact:
+
+```bash
+./dmcp-agent --pretty brief
+./dmcp-agent --pretty content
+./dmcp-agent --pretty tools --compact
+./dmcp-agent --pretty shell
+```
+
+Useful commands:
+
+- `brief`: compact game state, available content, and agent rules.
+- `content`: available enemies, items, weapons, ammo, keys, maps, and giveable
+  objects for the current game mode.
+- `read`: granular reads such as `player`, `map`, `game`, `enemies`,
+  `entities`, `items`, and `inventory`.
+- `spawn`, `spawn-many`: spawn available entities.
+- `give`, `give-many`: give available items, weapons, ammo, keys, or armor.
+- `level`: change level after content validation.
+- `weapon`, `input`, `input-plan`: control player input.
+- `shell`: keep one MCP connection open for repeated commands.
+
+Weapon slots follow Doom controls: `1` Fist/Chainsaw, `2` Pistol, `3`
+Shotgun/SuperShotgun, `4` Chaingun, `5` RocketLauncher, `6` PlasmaRifle, `7`
+BFG9000.
+
+More examples are in `agents/python/README.md`.
+
+## Code Editors and MCP Clients
+
+Use raw MCP config when your preferred editor or agent client supports MCP
+directly. This package includes ready-to-use presets:
+
+- Codex: `agent-presets/codex/config.toml`
+- OpenCode: `agent-presets/opencode/opencode.json`
+- Claude Code: `agent-presets/claude/mcp.json`
+- Pi: `agent-presets/pi/mcp.json`
+- Generic MCP clients: `agent-presets/generic/mcp.json`
+
+All presets point to the local server:
+
+```text
+http://localhost:6060/mcp
+```
+
+Minimal Codex config:
 
 ```toml
 [mcp_servers.doom]
@@ -70,21 +125,7 @@ url = "http://localhost:6060/mcp"
 enabled = true
 ```
 
-OpenCode:
-
-```json
-{
-  "mcp": {
-    "doom": {
-      "type": "remote",
-      "url": "http://localhost:6060/mcp",
-      "enabled": true
-    }
-  }
-}
-```
-
-Claude Code:
+Minimal MCP JSON config:
 
 ```json
 {
@@ -97,25 +138,59 @@ Claude Code:
 }
 ```
 
-Generic MCP clients use the same `mcpServers` shape in
-`agent-presets/generic/mcp.json`.
+Use raw MCP for custom clients, debugging, or tools not exposed by the helper.
+For normal agent gameplay, prefer `dmcp-agent`.
 
-The release archive also includes `AGENTS.md` with agent-oriented notes,
-`agent-presets/` for raw MCP client configuration, and the optional Python
-`dmcp-agent` helper under `agents/python`.
+## For Developers
+
+Package layout:
+
+- `crispy-doom` / `crispy-doom.exe`: game executable.
+- `libdmcp.so`, `libdmcp.dylib`, or `dmcp.dll`: bundled DMCP shared runtime.
+- `go.sh` / `go.bat`: start the game with a default IWAD.
+- `dmcp-agent` / `dmcp-agent.bat`: run the Python agent helper from package root.
+- `agents/python/`: helper source and `uv.lock`.
+- `agent-presets/`: raw MCP config files for common clients.
+- `BUILDING.md`: source build notes for this fork.
+- `AGENTS.md`: concise agent-oriented usage notes.
+
+Useful checks:
+
+```bash
+curl http://localhost:6060/health
+./dmcp-agent --pretty tools --compact
+./dmcp-agent --pretty content
+```
+
+The game integration uses a single shared DMCP runtime and a thin Crispy adapter:
+
+```text
+Crispy Doom -> Crispy adapter -> Doom MCP -> Generic MCP -> core API/runtime
+```
+
+The boundary from Crispy into DMCP is C-compatible. C++ SDK consumers can use
+the source-stable protocol wrappers from the `doom-mcp` SDK.
+
+## Runtime Dependencies
+
+- Linux packages expect SDL2, SDL2_net, SDL2_mixer, FluidSynth, libpng,
+  libsamplerate, and zlib runtime libraries from the system package manager. On
+  Debian/Ubuntu:
+  `sudo apt-get install libsdl2-2.0-0 libsdl2-net-2.0-0 libsdl2-mixer-2.0-0 libfluidsynth3 libpng16-16 libsamplerate0 zlib1g`.
+- macOS packages expect the same runtime libraries from Homebrew when they are
+  not already available:
+  `brew install sdl2 sdl2_net sdl2_mixer fluid-synth libpng libsamplerate`.
+- The agent helper requires `uv`: <https://docs.astral.sh/uv/>.
 
 ## Notes
 
-- Set `DOOM_WAD` to use a different IWAD.
-- Pass `-dmcp_port 6061` if you want a different MCP port.
+- Pass `-dmcp_port 6061` to use a different MCP port.
 - DMCP framebuffer capture is compiled out in release builds for now, so
   screenshot tools are not exposed.
 - DMCP does not require a global config file in this fork. Runtime behavior is
-  controlled by command-line flags; MCP client config files are release payload
-  templates only.
-- Claude Code and Codex may ask you to trust the project-local MCP config the
-  first time you open the extracted folder.
-- Source build dependencies and local build steps are in `docs/build-dmcp.md`
-  in the repository and `BUILDING.md` in the release artifact.
-- Release archives do not bundle WAD files; use your own IWAD or the included
-  download script for the Doom shareware WAD.
+  controlled by command-line flags; MCP client files in `agent-presets/` are
+  templates.
+- Claude Code and Codex may ask you to trust project-local MCP config the first
+  time you open the extracted folder.
+- Release archives do not bundle WAD files. The included downloader verifies
+  the expected SHA256 for the shareware `doom1.wad`.

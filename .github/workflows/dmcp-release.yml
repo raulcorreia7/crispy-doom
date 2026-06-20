@@ -3,17 +3,25 @@ name: DMCP Release
 on:
   push:
     tags:
-      - 'crispy-dmcp-v*'
+      - 'dmcp-v*'
   workflow_dispatch:
 
 env:
   DMCP_DIR: third_party/doom-mcp
   DMCP_BUILD_DIR: build/dmcp
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
 jobs:
   build:
     name: Build ${{ matrix.platform }}
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
@@ -71,9 +79,10 @@ jobs:
           if-no-files-found: error
 
   release:
-    if: startsWith(github.ref, 'refs/tags/crispy-dmcp-v')
+    if: startsWith(github.ref, 'refs/tags/dmcp-v')
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: write
     steps:

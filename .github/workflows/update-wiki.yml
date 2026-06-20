@@ -4,21 +4,38 @@ on:
   push:
     branches:
       - "master"
+    paths:
+      - "docs/build-linux.md"
+      - "docs/build-windows.md"
+      - "docs/build-macos.md"
+      - "docs/cheats.md"
+      - "docs/controls.md"
+      - "docs/crispness.md"
+      - "docs/params.md"
+      - "docs/compatibility.md"
+      - "docs/faq.md"
+      - "docs/changelog-history.md"
+      - ".github/workflows/update-wiki.yml"
   workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   update-wiki:
     if: ${{ github.repository == 'fabiangreffrath/crispy-doom' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v6
         with:
           path: code
       - name: Checkout wiki
-        uses: actions/checkout@v3
+        uses: actions/checkout@v6
         with:
           repository: ${{github.repository}}.wiki
           path: wiki
@@ -42,4 +59,7 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add .
-          git diff-index --quiet HEAD || git commit -m "Update wiki" && git push
+          if ! git diff-index --quiet HEAD; then
+            git commit -m "Update wiki"
+            git push
+          fi

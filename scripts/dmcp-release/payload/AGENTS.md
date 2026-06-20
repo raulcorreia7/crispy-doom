@@ -23,21 +23,23 @@ The package includes the DMCP Python helper under `agents/python`. It uses `uv`
 and talks to the running MCP server.
 
 ```bash
-cd agents/python
-uv run dmcp-agent --pretty brief
-uv run dmcp-agent --pretty read enemies --status alive --limit 8
-uv run dmcp-agent --pretty read items --kind armor --limit 8
-uv run dmcp-agent spawn DoomImp --x 160 --y 96
-uv run dmcp-agent give Shotgun --amount 1
-uv run dmcp-agent weapon 3
-uv run dmcp-agent input-plan forward --ticks 8
+./dmcp-agent --pretty brief
+./dmcp-agent --pretty read enemies --status alive --limit 8
+./dmcp-agent --pretty read items --kind armor --limit 8
+./dmcp-agent spawn DoomImp --x 160 --y 96
+./dmcp-agent give Shotgun --amount 1
+./dmcp-agent weapon 3
+./dmcp-agent input-plan forward --ticks 8
 ```
 
-Use exact names from `uv run dmcp-agent --pretty content`. Batch commands use
+On Windows use `dmcp-agent.bat`. The helper requires `uv`; install it from
+<https://docs.astral.sh/uv/> if the launcher reports it is missing.
+
+Use exact names from `./dmcp-agent --pretty content`. Batch commands use
 canonical DMCP fields only:
 
 ```bash
-uv run dmcp-agent batch --calls-json '[{"name":"give_item","arguments":{"item_class":"Shotgun","amount":1}}]'
+./dmcp-agent batch --calls-json '[{"name":"give_item","arguments":{"item_class":"Shotgun","amount":1}}]'
 ```
 
 `change_level` and `player_input` are direct tools. Use `level`, `input`,

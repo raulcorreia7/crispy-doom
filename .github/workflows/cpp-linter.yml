@@ -5,15 +5,25 @@ name: cpp-linter
 on:
   pull_request:
     types: [opened, reopened, synchronize]
+    paths-ignore:
+      - "**.md"
+      - "**.yml"
+      - "**.yaml"
   push:
     branches:
       - master
     paths-ignore:
       - "**.md"
       - "**.yml"
+      - "**.yaml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   cpp-linter:
+    timeout-minutes: 25
     strategy:
       matrix:
         compiler: [clang]
@@ -21,7 +31,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install libfluidsynth-dev libpng-dev libsamplerate0-dev libsdl2-dev libsdl2-mixer-dev libsdl2-net-dev ninja-build
+        run: sudo apt-get update && sudo apt-get install -y libfluidsynth-dev libpng-dev libsamplerate0-dev libsdl2-dev libsdl2-mixer-dev libsdl2-net-dev ninja-build
       - name: Run cmake to generate compilation database
         run: cmake -S . -B . -G Ninja -DCMAKE_EXPORT_COMPILE_COMMANDS=1
       - uses: cpp-linter/cpp-linter-action@v2

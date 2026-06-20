@@ -83,6 +83,7 @@ install_linux() {
     libsdl2-dev \
     libsdl2-net-dev \
     libsdl2-mixer-dev \
+    libfluidsynth-dev \
     libpng-dev \
     libsamplerate0-dev \
     zlib1g-dev
@@ -90,7 +91,7 @@ install_linux() {
 
 install_macos() {
   require_command brew
-  brew install cmake pkg-config sdl2 sdl2_net sdl2_mixer libpng libsamplerate
+  brew install cmake pkg-config sdl2 sdl2_net sdl2_mixer fluid-synth libpng libsamplerate
 }
 
 install_windows() {
@@ -113,6 +114,7 @@ install_windows() {
     sdl2 \
     sdl2-net \
     sdl2-mixer \
+    fluidsynth \
     libpng \
     libsamplerate \
     --triplet x64-windows

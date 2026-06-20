@@ -92,7 +92,7 @@ create_release() {
   fi
 
   local version_suffix="$tag"
-  version_suffix="${version_suffix#crispy-dmcp-v}"
+  version_suffix="${version_suffix#dmcp-v}"
   version_suffix="${version_suffix#v}"
   if [[ "$version_suffix" == *-* ]]; then
     flags+=(--prerelease --latest=false)

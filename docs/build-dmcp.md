@@ -19,13 +19,13 @@ sudo apt-get update
 sudo apt-get install -y \
   build-essential cmake git pkg-config \
   libsdl2-dev libsdl2-net-dev libsdl2-mixer-dev \
-  libpng-dev libsamplerate0-dev zlib1g-dev
+  libfluidsynth-dev libpng-dev libsamplerate0-dev zlib1g-dev
 ```
 
 Verify the development packages are visible before configuring:
 
 ```bash
-pkg-config --modversion sdl2 SDL2_net SDL2_mixer libpng samplerate zlib
+pkg-config --modversion sdl2 SDL2_net SDL2_mixer fluidsynth libpng samplerate zlib
 ```
 
 If CMake reports missing `SDL2::SDL2` or `SDL2::SDL2main`, check that
@@ -35,7 +35,7 @@ not enough to build Crispy Doom.
 ### macOS
 
 ```bash
-brew install cmake git pkg-config sdl2 sdl2_net sdl2_mixer libpng libsamplerate
+brew install cmake git pkg-config sdl2 sdl2_net sdl2_mixer fluid-synth libpng libsamplerate
 ```
 
 ### Windows
@@ -44,7 +44,8 @@ brew install cmake git pkg-config sdl2 sdl2_net sdl2_mixer libpng libsamplerate
 - CMake
 - Git
 - vcpkg
-- vcpkg packages: `zlib`, `sdl2`, `sdl2-net`, `sdl2-mixer`, `libpng`, `libsamplerate`
+- vcpkg packages: `zlib`, `sdl2`, `sdl2-net`, `sdl2-mixer`, `fluidsynth`,
+  `libpng`, `libsamplerate`
 
 ## Build DMCP
 
@@ -105,7 +106,7 @@ SDK consumers can use the source-stable protocol-name wrappers from
 
 ## Release Packaging
 
-The GitHub release workflow runs for `crispy-dmcp-v*` tags. It builds
+The GitHub release workflow runs for `dmcp-v*` tags. It builds
 Linux, macOS, and Windows archives, uploads each archive as a workflow artifact,
 then creates the GitHub release from those downloaded artifacts.
 
@@ -113,7 +114,8 @@ Each archive includes:
 
 - `crispy-doom` or `crispy-doom.exe`
 - the DMCP runtime library for the platform
-- `go.sh`/`go.bat` and `download_wad.sh`/`download_wad.bat`
+- `go.sh`/`go.bat`, `dmcp-agent`/`dmcp-agent.bat`, and
+  `download_wad.sh`/`download_wad.bat`
 - `agent-presets/` with Codex, OpenCode, Claude Code, Pi, and generic MCP presets
 - `agents/python/` with the optional Python `dmcp-agent` helper
 - `README.md`, `BUILDING.md`, `AGENTS.md`, and `VERSION.txt`

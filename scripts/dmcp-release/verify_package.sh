@@ -164,6 +164,14 @@ verify_windows_runtime_link() {
   fi
 }
 
+verify_unix_script_syntax() {
+  local root="$1"
+
+  command -v bash >/dev/null 2>&1 ||
+    die "bash is required to verify packaged Unix launchers"
+  bash -n "$root/go.sh" "$root/download_wad.sh" "$root/dmcp-agent"
+}
+
 main() {
   parse_args "$@"
   validate_args
@@ -197,12 +205,17 @@ main() {
   )
 
   if [[ "$platform" == "windows" || "${RUNNER_OS:-}" == "Windows" ]]; then
-    required_files+=("$root/crispy-doom.exe" "$root/download_wad.bat" "$root/go.bat")
+    required_files+=(
+      "$root/crispy-doom.exe"
+      "$root/download_wad.bat"
+      "$root/go.bat"
+      "$root/dmcp-agent.bat"
+    )
     local -a dmcp_runtimes=("$root"/$DMCP_RUNTIME_WINDOWS_GLOB)
     verify_runtime_count "$root" "$DMCP_RUNTIME_WINDOWS" "${dmcp_runtimes[@]}"
     verify_windows_runtime_link "$root/crispy-doom.exe"
   else
-    required_files+=("$root/crispy-doom" "$root/download_wad.sh" "$root/go.sh")
+    required_files+=("$root/crispy-doom" "$root/download_wad.sh" "$root/go.sh" "$root/dmcp-agent")
     if [[ "$platform" == "macos" ]]; then
       local -a dmcp_runtimes=("$root"/$DMCP_RUNTIME_MACOS_GLOB)
       verify_runtime_count "$root" "$DMCP_RUNTIME_MACOS" "${dmcp_runtimes[@]}"
@@ -236,6 +249,11 @@ main() {
   if find "$root/agents/python" -type d \( -name '.venv' -o -name '__pycache__' \) \
       -print -quit | grep -q .; then
     die "release package must not bundle Python virtualenvs or bytecode caches"
+  fi
+
+  if [[ "$platform" != "windows" && "${RUNNER_OS:-}" != "Windows" ]]; then
+    [[ -x "$root/dmcp-agent" ]] || die "dmcp-agent launcher must be executable"
+    verify_unix_script_syntax "$root"
   fi
 }
 

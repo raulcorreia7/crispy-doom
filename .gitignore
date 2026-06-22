@@ -65,3 +65,8 @@ GTAGS
 # clangd settings
 /.cache/clangd
 compile_commands.json
+
+# Game data files
+*.wad
+*.iwad
+*.pwad

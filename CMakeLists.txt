@@ -57,12 +57,15 @@ endif()
 
 option(CRISPY_TRUECOLOR "True color rendering" OFF)
 
-option(DMCP_ENABLE "Enable DMCP (MCP protocol support)" OFF)
+set(CRISPY_DMCP_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/third_party/doom-mcp")
+set(CRISPY_DMCP_BUILD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/build/dmcp")
+
+option(DMCP_ENABLE "Enable DMCP (MCP protocol support)" ON)
 option(DMCP_FRAME_CAPTURE "Enable experimental DMCP framebuffer capture" OFF)
-set(DMCP_ROOT "" CACHE PATH "Path to DMCP SDK root directory")
-set(DMCP_ADAPTER_DIR "" CACHE PATH "Path to DMCP Crispy adapter directory")
-set(DMCP_BUILD_DIR "" CACHE PATH "Path to DMCP CMake build directory")
-set(DMCP_LIBRARY_DIR "" CACHE PATH "Directory containing built DMCP libraries")
+set(DMCP_ROOT "${CRISPY_DMCP_ROOT}" CACHE PATH "Path to DMCP SDK root directory")
+set(DMCP_ADAPTER_DIR "${DMCP_ROOT}/adapters/crispy-doom" CACHE PATH "Path to DMCP Crispy adapter directory")
+set(DMCP_BUILD_DIR "${CRISPY_DMCP_BUILD_DIR}" CACHE PATH "Path to DMCP CMake build directory")
+set(DMCP_LIBRARY_DIR "${DMCP_BUILD_DIR}" CACHE PATH "Directory containing built DMCP libraries")
 include(DMCPIntegration)
 
 # Check for libsamplerate.

@@ -384,6 +384,29 @@ style: |
     text-underline-offset: 0.18em;
   }
 
+  section.qna {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+  }
+
+  section.qna::before {
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  section.qna h1 {
+    margin: 0;
+  }
+
+  section.qna .small {
+    color: var(--tree-comment);
+    font-size: 20px;
+    margin-top: 22px;
+  }
+
   .tool-row code {
     font-size: 20px;
     white-space: nowrap;
@@ -858,9 +881,10 @@ This is the special mention: the surprise was not only that a frontier model can
 
 ---
 
+<!-- _class: qna -->
+
 # Q&A
 
-<p class="lede">github.com/raulcorreia7/crispy-doom</p>
 <p class="small">github.com/raulcorreia7</p>
 
 <!--

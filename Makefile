@@ -9,6 +9,8 @@ APP_BUILD_DIR ?= build-dmcp
 PRESETS_DIR ?= scripts/dmcp-release/payload/agent-presets
 PAYLOAD_DIR ?= scripts/dmcp-release/payload
 DOWNLOAD_ARGS ?=
+MARP ?= marp
+PRESENTATION_DIR ?= docs/presentations
 
 ROOT_DIR := $(CURDIR)
 DMCP_ROOT := $(ROOT_DIR)/third_party/doom-mcp
@@ -16,28 +18,31 @@ DMCP_ADAPTER_DIR := $(DMCP_ROOT)/adapters/crispy-doom
 
 .PHONY: help setup configure-dmcp build-dmcp configure build all \
 	codex opencode claude pi generic agents ensure-agents \
-	download-d1 download-d2 clean distclean
+	download-d1 download-d2 presentation presentation-serve ensure-marp \
+	clean distclean
 
 help:
 	@printf '%s\n' 'Crispy Doom DMCP build helpers'
 	@printf '\n%s\n' 'Targets:'
-	@printf '  %-16s %s\n' 'all' 'Set up submodules and build DMCP plus the app'
-	@printf '  %-16s %s\n' 'setup' 'Initialize and update all git submodules'
-	@printf '  %-16s %s\n' 'configure-dmcp' 'Configure the DMCP runtime CMake build'
-	@printf '  %-16s %s\n' 'build-dmcp' 'Build the DMCP runtime'
-	@printf '  %-16s %s\n' 'configure' 'Configure the Crispy Doom DMCP app build'
-	@printf '  %-16s %s\n' 'build' 'Build DMCP first, then the Crispy Doom app'
-	@printf '  %-16s %s\n' 'codex' 'Install AGENTS.md and Codex MCP preset'
-	@printf '  %-16s %s\n' 'opencode' 'Install AGENTS.md and OpenCode MCP preset'
-	@printf '  %-16s %s\n' 'claude' 'Install AGENTS.md and Claude MCP preset'
-	@printf '  %-16s %s\n' 'pi' 'Install AGENTS.md and Pi MCP preset'
-	@printf '  %-16s %s\n' 'generic' 'Install AGENTS.md and generic MCP preset'
-	@printf '  %-16s %s\n' 'agents' 'Install all packaged agent presets'
-	@printf '  %-16s %s\n' 'download-d1' 'Download Doom shareware doom1.wad'
-	@printf '  %-16s %s\n' 'download-d2' 'Download Doom II doom2.wad'
-	@printf '  %-16s %s\n' 'clean' 'Run CMake clean for existing build trees'
-	@printf '  %-16s %s\n' 'distclean' 'Remove DMCP and app build directories'
-	@printf '\n%s\n' 'Variables: CMAKE, BUILD_TYPE, DMCP_BUILD_DIR, APP_BUILD_DIR, DOWNLOAD_ARGS'
+	@printf '  %-18s %s\n' 'all' 'Set up submodules and build DMCP plus the app'
+	@printf '  %-18s %s\n' 'setup' 'Initialize and update all git submodules'
+	@printf '  %-18s %s\n' 'configure-dmcp' 'Configure the DMCP runtime CMake build'
+	@printf '  %-18s %s\n' 'build-dmcp' 'Build the DMCP runtime'
+	@printf '  %-18s %s\n' 'configure' 'Configure the Crispy Doom DMCP app build'
+	@printf '  %-18s %s\n' 'build' 'Build DMCP first, then the Crispy Doom app'
+	@printf '  %-18s %s\n' 'codex' 'Install AGENTS.md and Codex MCP preset'
+	@printf '  %-18s %s\n' 'opencode' 'Install AGENTS.md and OpenCode MCP preset'
+	@printf '  %-18s %s\n' 'claude' 'Install AGENTS.md and Claude MCP preset'
+	@printf '  %-18s %s\n' 'pi' 'Install AGENTS.md and Pi MCP preset'
+	@printf '  %-18s %s\n' 'generic' 'Install AGENTS.md and generic MCP preset'
+	@printf '  %-18s %s\n' 'agents' 'Install all packaged agent presets'
+	@printf '  %-18s %s\n' 'download-d1' 'Download Doom shareware doom1.wad'
+	@printf '  %-18s %s\n' 'download-d2' 'Download Doom II doom2.wad'
+	@printf '  %-18s %s\n' 'presentation' 'Preview presentations with the Marp local server'
+	@printf '  %-18s %s\n' 'presentation-serve' 'Preview presentations with the Marp local server'
+	@printf '  %-18s %s\n' 'clean' 'Run CMake clean for existing build trees'
+	@printf '  %-18s %s\n' 'distclean' 'Remove DMCP and app build directories'
+	@printf '\n%s\n' 'Variables: CMAKE, BUILD_TYPE, DMCP_BUILD_DIR, APP_BUILD_DIR, DOWNLOAD_ARGS, MARP'
 
 setup:
 	git submodule update --init --recursive
@@ -122,6 +127,17 @@ download-d1:
 
 download-d2:
 	scripts/download_doom2_wad.sh -o doom2.wad $(DOWNLOAD_ARGS)
+
+ensure-marp:
+	@command -v "$(MARP)" >/dev/null 2>&1 || { \
+		printf '%s\n' 'error: marp is required for presentation targets' >&2; \
+		exit 1; \
+	}
+
+presentation: presentation-serve
+
+presentation-serve: ensure-marp
+	$(MARP) --server "$(PRESENTATION_DIR)" --host 127.0.0.1 --port 8080
 
 clean:
 	@if [[ -d "$(DMCP_BUILD_DIR)" ]]; then \

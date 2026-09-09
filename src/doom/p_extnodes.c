@@ -469,7 +469,7 @@ void P_LoadNodes_ZDBSP(int lump, mapformat_t format)
         // first estimate for compression rate:
         // output buffer size == 2.5 * input size
         outlen = 2.5 * len;
-        output = Z_Malloc(outlen, PU_STATIC, 0);
+        output = malloc(outlen);
 
         // initialize stream state for decompression
         zstream = malloc(sizeof(*zstream));
@@ -486,11 +486,12 @@ void P_LoadNodes_ZDBSP(int lump, mapformat_t format)
         // resize if output buffer runs full
         while ((err = inflate(zstream, Z_SYNC_FLUSH)) == Z_OK)
         {
-            int outlen_old = outlen;
-            outlen = 2 * outlen_old;
+            const int next_out_old = (int)(zstream->next_out - output);
+
+            outlen *= 2;
             output = I_Realloc(output, outlen);
-            zstream->next_out = output + outlen_old;
-            zstream->avail_out = outlen - outlen_old;
+            zstream->next_out = output + next_out_old;
+            zstream->avail_out = outlen - next_out_old;
         }
 
         if (err != Z_STREAM_END)
@@ -636,7 +637,7 @@ void P_LoadNodes_ZDBSP(int lump, mapformat_t format)
 
 #ifdef HAVE_LIBZ
     if (format.compressed && output)
-        Z_Free(output);
+        free(output);
     else
 #endif
         W_ReleaseLumpNum(lump);

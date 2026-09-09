@@ -2221,7 +2221,7 @@ void G_DeferedInitNew(skill_t skill, int episode, int map)
     {
 	G_CheckDemoStatus();
 	Z_Free(demoname);
-	G_RecordDemo(skill, 1, episode, map, orig_demoname);
+	G_RecordDemo(d_skill, 1, d_episode, d_map, orig_demoname);
     }
 }
 
@@ -2737,6 +2737,11 @@ static size_t WriteCmdLineLump(MEMFILE *stream)
     if (M_CheckParm("-solo-net"))
     {
         mem_fputs(" -solo-net", stream);
+    }
+
+    if (M_CheckParm("-coop_spawns"))
+    {
+        mem_fputs(" -coop_spawns", stream);
     }
 
     return mem_ftell(stream) - pos;

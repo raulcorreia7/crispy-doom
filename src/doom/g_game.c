@@ -3540,6 +3540,11 @@ static size_t WriteCmdLineLump(MEMFILE *stream)
         mem_fputs(" -solo-net", stream);
     }
 
+    if (M_CheckParm("-coop_spawns"))
+    {
+        mem_fputs(" -coop_spawns", stream);
+    }
+
     return mem_ftell(stream) - pos;
 }
 

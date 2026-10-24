@@ -86,8 +86,8 @@ Many additional less user-visible features have been implemented, e.g. fixed eng
 * Linux: [Get the latest Crispy Doom fork release](https://github.com/raulcorreia7/crispy-doom/releases/latest). Upstream Crispy Doom is also available on Ubuntu (“Eoan Ermine” 19.10 and later)/Debian (“Buster” 10 and later) based systems: `sudo apt-get install crispy-doom`
 
 
-The most recent list of changes in this fork can be found in the [Changelog](https://github.com/raulcorreia7/crispy-doom/blob/master/CHANGELOG.md).
-A complete upstream history of changes and releases can be found in the [upstream Wiki](https://github.com/fabiangreffrath/crispy-doom/wiki/Changelog-History), and fork releases are published on the [Releases](https://github.com/raulcorreia7/crispy-doom/releases) page.
+The most recent list of changes can be found in the [Release Notes](https://github.com/raulcorreia7/crispy-doom/blob/master/RELEASE_NOTES.md).
+Fork releases are published on the [Releases](https://github.com/raulcorreia7/crispy-doom/releases) page, and the complete upstream history is on the [upstream Releases](https://github.com/fabiangreffrath/crispy-doom/releases) page.
 
 Daily builds of Crispy Doom can be found here:
 http://latest.chocolate-doom.org/

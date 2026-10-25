@@ -4,7 +4,7 @@ This is a Crispy Doom package with DMCP support. It lets you play Doom normally
 and, at the same time, let an AI assistant inspect or control the running game
 through MCP.
 
-DMCP runs locally at `http://localhost:6060/mcp` by default. For Codex,
+DMCP runs locally at `http://127.0.0.1:6060/mcp` by default. For Codex,
 OpenCode, Claude Code, Pi, and similar tools, use the bundled `dmcp-agent`
 helper first. It is easier for models to use than raw MCP because it returns
 compact, structured output and hides verbose schemas.
@@ -115,14 +115,14 @@ directly. This package includes copy-ready presets:
 All presets point to the local server:
 
 ```text
-http://localhost:6060/mcp
+http://127.0.0.1:6060/mcp
 ```
 
 Minimal Codex config:
 
 ```toml
 [mcp_servers.doom]
-url = "http://localhost:6060/mcp"
+url = "http://127.0.0.1:6060/mcp"
 enabled = true
 ```
 
@@ -133,7 +133,7 @@ Minimal MCP JSON config:
   "mcpServers": {
     "doom": {
       "type": "http",
-      "url": "http://localhost:6060/mcp"
+      "url": "http://127.0.0.1:6060/mcp"
     }
   }
 }
@@ -161,7 +161,7 @@ Package layout:
 Useful checks:
 
 ```bash
-curl http://localhost:6060/health
+curl http://127.0.0.1:6060/health
 ./dmcp-agent --pretty tools --compact
 ./dmcp-agent --pretty content
 ```
@@ -193,6 +193,13 @@ the source-stable protocol wrappers from the `doom-mcp` SDK.
 ## Notes
 
 - Pass `-dmcp_port 6061` to use a different MCP port.
+- DMCP listens on `127.0.0.1` only. Set `DMCP_BIND_ADDRESS=0.0.0.0` to accept
+  connections from other machines; anyone who can reach the port can then
+  control the game.
+- Spawn, give, health and console tools need `-dmcp_allow_cheats`. `go.sh` and
+  `go.bat` pass it for you; add it yourself when you start `crispy-doom`
+  directly.
+- DMCP is MIT licensed; see `DMCP-LICENSE` in the package.
 - DMCP framebuffer capture is compiled out in release builds for now, so
   screenshot tools are not exposed.
 - DMCP does not require a global config file in this fork. Runtime behavior is

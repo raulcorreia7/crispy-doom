@@ -3,7 +3,7 @@
   "mcp": {
     "doom": {
       "type": "remote",
-      "url": "http://localhost:6060/mcp",
+      "url": "http://127.0.0.1:6060/mcp",
       "enabled": true,
       "timeout": 10000
     }

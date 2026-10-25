@@ -32,7 +32,7 @@ fi
 
 for argument in "$@"; do
 	if [[ "$argument" == "-iwad" ]]; then
-		exec ./crispy-doom "$@"
+		exec ./crispy-doom -dmcp_allow_cheats "$@"
 	fi
 done
 
@@ -47,4 +47,4 @@ if [[ ! -f "$wad_path" ]]; then
 	exit 1
 fi
 
-exec ./crispy-doom -iwad "$wad_path" "$@"
+exec ./crispy-doom -iwad "$wad_path" -dmcp_allow_cheats "$@"

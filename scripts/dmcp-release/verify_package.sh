@@ -193,6 +193,7 @@ main() {
     "$root/AGENTS.md"
     "$root/COPYING.md"
     "$root/AUTHORS"
+    "$root/DMCP-LICENSE"
     "$root/VERSION.txt"
     "$root/agent-presets/codex/config.toml"
     "$root/agent-presets/opencode/opencode.json"

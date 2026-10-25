@@ -144,7 +144,7 @@ Do this only for local human verification, not in CI:
 
 ```bash
 ./build-dmcp/src/crispy-doom -iwad /path/to/doom.wad
-curl http://localhost:6060/health
+curl http://127.0.0.1:6060/health
 ```
 
 Use `-dmcp_port <port>` if you need the MCP server on a non-default port.

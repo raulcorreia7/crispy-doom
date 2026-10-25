@@ -31,11 +31,11 @@ if not exist "%DOOM_WAD%" (
     exit /b 1
 )
 
-crispy-doom.exe -iwad "%DOOM_WAD%" %*
+crispy-doom.exe -iwad "%DOOM_WAD%" -dmcp_allow_cheats %*
 exit /b %ERRORLEVEL%
 
 :run
-crispy-doom.exe %*
+crispy-doom.exe -dmcp_allow_cheats %*
 exit /b %ERRORLEVEL%
 
 :help

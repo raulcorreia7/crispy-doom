@@ -28,7 +28,7 @@ cd ../..
 Then verify the MCP server from a second terminal:
 
 ```bash
-curl http://localhost:6060/health
+curl http://127.0.0.1:6060/health
 ```
 
 The helper requires `uv` and Python 3.10 or newer. First run may download the

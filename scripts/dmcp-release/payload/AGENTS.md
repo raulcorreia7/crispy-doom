@@ -12,7 +12,7 @@ On Windows use:
 .\go.bat
 ```
 
-The release package listens on `http://localhost:6060/mcp` by default. Use
+The release package listens on `http://127.0.0.1:6060/mcp` by default. Use
 `-dmcp_port <port>` if you need a different port.
 Framebuffer capture is compiled out in this release, so screenshot tools are
 not exposed.

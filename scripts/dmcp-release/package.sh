@@ -276,6 +276,7 @@ copy_release_files() {
   copy_file "$REPO_ROOT/docs/build-dmcp.md" "$artifact_dir/BUILDING.md"
   copy_file "$REPO_ROOT/COPYING.md" "$artifact_dir/COPYING.md"
   copy_file "$REPO_ROOT/AUTHORS" "$artifact_dir/AUTHORS"
+  copy_file "$dmcp_dir/LICENSE" "$artifact_dir/DMCP-LICENSE"
   copy_tree_contents "$PAYLOAD_DIR" "$artifact_dir"
   copy_required_dir "$dmcp_dir/examples/agents/python" "$artifact_dir/agents/python"
   copy_file "$REPO_ROOT/scripts/dmcp-release/agent-python-README.md" \

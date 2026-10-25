@@ -112,7 +112,7 @@ These tools need `-dmcp_allow_cheats`:
 
 A tool is also absent when the game does not support it. Arguments, results,
 and units are in `DMCP-TOOLS.md` (in the repository:
-`third_party/doom-mcp/docs/design/v1-tools.md`).
+`third_party/doom-mcp/docs/TOOLS.md`).
 
 ## Python agent
 

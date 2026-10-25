@@ -116,32 +116,35 @@ cd crispy-doom-windows-x86_64
 .\go.bat
 ```
 
-The release artifact includes launch scripts, raw MCP presets under
-`agent-presets/`, and the token-efficient Python helper under `agents/python`.
-The `go.sh` / `go.bat` launcher auto-downloads the checksum-verified Doom
-shareware IWAD if `doom1.wad` is missing. Put another IWAD beside the executable
-or set `DOOM_WAD` when you want a different game data file.
+The release artifact includes launch scripts, MCP client presets under
+`agent-presets/`, and `dmcp-agent`, a command-line client written in Python
+(standard library only). The `go.sh` / `go.bat` launcher auto-downloads the
+checksum-verified Doom shareware IWAD if `doom1.wad` is missing. Put another IWAD
+beside the executable or set `DOOM_WAD` when you want a different game data file.
 
-DMCP listens at `http://localhost:6060/mcp` by default. For CLI agents, prefer
-the bundled Python `dmcp-agent` helper before calling MCP tools directly:
+DMCP is linked statically into `crispy-doom`, `crispy-heretic`, `crispy-hexen`,
+and `crispy-strife`. The server listens at `http://127.0.0.1:6060/mcp` and
+accepts connections from your machine only. The launchers pass
+`-dmcp_allow_cheats`, which registers the tools that change the game (`spawn`,
+`give`, `cheat`, `teleport`, `damage`, `change_level`, `console`). Run
+`./crispy-doom` directly to start without them, or add `-nodmcp` to turn the
+server off. For CLI agents, the `dmcp-agent` script (Python 3.10 or newer) needs
+no other packages:
 
 ```bash
-./dmcp-agent --pretty brief
-./dmcp-agent --pretty content enemies
-./dmcp-agent spawn DoomImp --x 160 --y 96
+./dmcp-agent tools
+./dmcp-agent state --sections player --limit 8
+./dmcp-agent input "forward 35; turn_to 90; attack 10; wait"
 ```
 
-On Windows use `.\dmcp-agent.bat`. The helper requires `uv` and Python 3.10 or
-newer; install `uv` from <https://docs.astral.sh/uv/> if the launcher reports it
-is missing.
+On Windows use `.\dmcp-agent.bat`.
 
 Linux/macOS packages use system SDL2, FluidSynth, png, samplerate, and zlib
 runtime libraries. If the loader reports a missing library, install the runtime
 packages shown in [README.DMCP.md](README.DMCP.md).
 
-For the Crispy Doom release package, agent-ready config files and quickstart,
-see [README.DMCP.md](README.DMCP.md). Source build dependencies and local build
-steps are documented in [docs/build-dmcp.md](docs/build-dmcp.md).
+For flags, MCP client setup, and the tool list, see [README.DMCP.md](README.DMCP.md).
+Source build dependencies and steps are in [docs/build-dmcp.md](docs/build-dmcp.md).
 
 ### Sources
 

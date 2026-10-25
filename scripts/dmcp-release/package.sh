@@ -274,7 +274,7 @@ copy_release_files() {
   copy_file "$REPO_ROOT/COPYING.md" "$artifact_dir/COPYING.md"
   copy_file "$REPO_ROOT/AUTHORS" "$artifact_dir/AUTHORS"
   copy_file "$DMCP_DIR/LICENSE" "$artifact_dir/DMCP-LICENSE"
-  copy_file "$DMCP_DIR/docs/design/v1-tools.md" "$artifact_dir/DMCP-TOOLS.md"
+  copy_file "$DMCP_DIR/docs/TOOLS.md" "$artifact_dir/DMCP-TOOLS.md"
   copy_third_party_licenses
   copy_tree_contents "$PAYLOAD_DIR" "$artifact_dir"
 

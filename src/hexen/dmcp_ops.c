@@ -230,15 +230,15 @@ static bool ReadPlayer(void *user, dmcp_player_info_t *out)
     }
 
     out->id = mo->dmcp_id;
-    out->x = DMCP_FixedToDouble(mo->x);
-    out->y = DMCP_FixedToDouble(mo->y);
-    out->z = DMCP_FixedToDouble(mo->z);
-    out->angle = DMCP_AngleToDegrees(mo->angle);
-    out->momx = DMCP_FixedToDouble(mo->momx);
-    out->momy = DMCP_FixedToDouble(mo->momy);
-    out->momz = DMCP_FixedToDouble(mo->momz);
-    out->floor_z = DMCP_FixedToDouble(mo->floorz);
-    out->ceiling_z = DMCP_FixedToDouble(mo->ceilingz);
+    out->x = dmcp_fixed_to_double(mo->x);
+    out->y = dmcp_fixed_to_double(mo->y);
+    out->z = dmcp_fixed_to_double(mo->z);
+    out->angle = dmcp_bam_to_degrees(mo->angle);
+    out->momx = dmcp_fixed_to_double(mo->momx);
+    out->momy = dmcp_fixed_to_double(mo->momy);
+    out->momz = dmcp_fixed_to_double(mo->momz);
+    out->floor_z = dmcp_fixed_to_double(mo->floorz);
+    out->ceiling_z = dmcp_fixed_to_double(mo->ceilingz);
     // player->health is only valid between levels; mo->health is live.
     out->health = mo->health > 0 ? mo->health : 0;
     out->armor = ArmorDisplay(player);
@@ -352,12 +352,12 @@ static void IterateEntities(void *user, dmcp_entity_cb cb, void *ctx)
         memset(&e, 0, sizeof(e));
         e.id = mo->dmcp_id;
         e.type = (int) mo->type;
-        e.x = DMCP_FixedToDouble(mo->x);
-        e.y = DMCP_FixedToDouble(mo->y);
-        e.z = DMCP_FixedToDouble(mo->z);
-        e.angle = DMCP_AngleToDegrees(mo->angle);
-        e.radius = DMCP_FixedToDouble(mo->radius);
-        e.height = DMCP_FixedToDouble(mo->height);
+        e.x = dmcp_fixed_to_double(mo->x);
+        e.y = dmcp_fixed_to_double(mo->y);
+        e.z = dmcp_fixed_to_double(mo->z);
+        e.angle = dmcp_bam_to_degrees(mo->angle);
+        e.radius = dmcp_fixed_to_double(mo->radius);
+        e.height = dmcp_fixed_to_double(mo->height);
         e.health = mo->health;
         e.target_id = mo->target ? mo->target->dmcp_id : 0;
         e.tid = mo->tid;
@@ -441,15 +441,15 @@ static const char *Spawn(void *user, const dmcp_spawn_t *s, uint32_t *out_id)
     info = &mobjinfo[s->type];
     if (s->has_z)
     {
-        z = DMCP_DoubleToFixed(s->z);
+        z = dmcp_double_to_fixed(s->z);
     }
     else
     {
         z = (info->flags & MF_SPAWNCEILING) ? ONCEILINGZ : ONFLOORZ;
     }
-    mo = P_SpawnMobj(DMCP_DoubleToFixed(s->x), DMCP_DoubleToFixed(s->y), z,
+    mo = P_SpawnMobj(dmcp_double_to_fixed(s->x), dmcp_double_to_fixed(s->y), z,
                      (mobjtype_t) s->type);
-    mo->angle = DMCP_DegreesToAngle(s->angle);
+    mo->angle = dmcp_degrees_to_bam(s->angle);
     *out_id = mo->dmcp_id;
     return NULL;
 }
@@ -625,15 +625,15 @@ static const char *Teleport(void *user, const dmcp_pose_t *pose)
     {
         return "not in a level";
     }
-    if (!P_TeleportMove(mo, DMCP_DoubleToFixed(pose->x),
-                        DMCP_DoubleToFixed(pose->y)))
+    if (!P_TeleportMove(mo, dmcp_double_to_fixed(pose->x),
+                        dmcp_double_to_fixed(pose->y)))
     {
         return "the destination is blocked";
     }
-    mo->z = pose->has_z ? DMCP_DoubleToFixed(pose->z) : mo->floorz;
+    mo->z = pose->has_z ? dmcp_double_to_fixed(pose->z) : mo->floorz;
     if (pose->has_angle)
     {
-        mo->angle = DMCP_DegreesToAngle(pose->angle);
+        mo->angle = dmcp_degrees_to_bam(pose->angle);
     }
     mo->momx = mo->momy = mo->momz = 0;
     if (mo->flags2 & MF2_FLOORCLIP)
@@ -726,32 +726,6 @@ void DMCP_HexenStart(void)
 
 // --- input -------------------------------------------------------------------
 
-// Turns sent in ticcmds the game has not run yet. Adding them to the mobj
-// angle predicts the view angle the next ticcmd starts from, so turn_to and
-// face do not overshoot while maketic runs ahead of gametic.
-#define TURN_HISTORY 128
-
-static struct
-{
-    int tic;
-    short turn;
-} sent_turns[TURN_HISTORY];
-
-static double PredictedAngle(int maketic)
-{
-    angle_t angle = Player()->mo->angle;
-    int tic;
-
-    for (tic = gametic; tic < maketic; ++tic)
-    {
-        if (sent_turns[tic % TURN_HISTORY].tic == tic)
-        {
-            angle += (angle_t) sent_turns[tic % TURN_HISTORY].turn << 16;
-        }
-    }
-    return DMCP_AngleToDegrees(angle);
-}
-
 static int Clamp(int value, int limit)
 {
     return value > limit ? limit : value < -limit ? -limit : value;
@@ -782,7 +756,8 @@ void DMCP_ApplyInput(ticcmd_t *cmd, int maketic)
     {
         return;
     }
-    if (!dmcp_input_next(dmcp_host, PredictedAngle(maketic), &in))
+    if (!dmcp_input_next(dmcp_host, maketic, gametic,
+                         dmcp_bam_to_degrees(Player()->mo->angle), &in))
     {
         return;
     }
@@ -799,8 +774,6 @@ void DMCP_ApplyInput(ticcmd_t *cmd, int maketic)
 
     turn = (short) lround(in.turn * (65536.0 / 360.0));
     cmd->angleturn += turn;
-    sent_turns[maketic % TURN_HISTORY].tic = maketic;
-    sent_turns[maketic % TURN_HISTORY].turn = turn;
 
     if (in.buttons & DMCP_BTN_ATTACK)
     {

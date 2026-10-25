@@ -81,6 +81,10 @@
 
 #include "d_main.h"
 
+#ifdef DMCP
+#include "dmcp_ops.h"
+#endif
+
 #include "strife_icon.c"
 
 //
@@ -2327,6 +2331,10 @@ void D_DoomMain (void)
     if (gamemode == commercial && W_CheckNumForName("map01") < 0)
         storedemo = true;
     */
+
+#ifdef DMCP
+    DMCP_StrifeStart();
+#endif
 
     //!
     // @arg <x>

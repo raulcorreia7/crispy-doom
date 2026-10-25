@@ -108,6 +108,10 @@ static boolean  new_sync = true;
 
 static loop_interface_t *loop_interface = NULL;
 
+// Called between tics, at least once per frame and while waiting for tics.
+// Embedders (e.g. DMCP) use it to run work on the game thread.
+void (*D_LoopServiceHook)(void) = NULL;
+
 // Current players in the multiplayer game.
 // This is distinct from playeringame[] used by the game code, which may
 // modify playeringame[] when playing back multiplayer demos.
@@ -692,6 +696,9 @@ void TryRunTics (void)
     extern int leveltime;
     #define return_early (crispy->uncapped && counts == 0 && leveltime > oldleveltime && screenvisible)
 
+    if (D_LoopServiceHook)
+        D_LoopServiceHook();
+
     // get real tics
     entertic = I_GetTime() / ticdup;
     realtics = entertic - oldentertics;
@@ -786,6 +793,9 @@ void TryRunTics (void)
             }
 
             I_Sleep(1);
+
+            if (D_LoopServiceHook)
+                D_LoopServiceHook();
         }
     }
 

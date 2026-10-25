@@ -1807,6 +1807,7 @@ void P_UnArchiveThinkers(void)
             case tc_mobj:
                 mobj = Z_Malloc(sizeof(*mobj), PU_LEVEL, NULL);
                 saveg_read_mobj_t(mobj);
+                mobj->dmcp_id = P_NextMobjId(); // [dmcp]
 //              mobj->target = NULL;
                 P_SetThingPosition(mobj);
                 mobj->info = &mobjinfo[mobj->type];

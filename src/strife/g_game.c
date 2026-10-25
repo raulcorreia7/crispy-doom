@@ -49,6 +49,10 @@
 #include "am_map.h"
 #include "p_extsaveg.h" // [crispy] for extended savegame information
 
+#ifdef DMCP
+#include "dmcp_ops.h"
+#endif
+
 // Needs access to LFB.
 #include "v_video.h"
 
@@ -910,6 +914,10 @@ void G_BuildTiccmd (ticcmd_t* cmd, int maketic)
     localview.angle = 0;
     localview.rawangle = 0.0;
     prevcarry = carry;
+
+#ifdef DMCP
+    DMCP_ApplyInput(cmd, maketic);
+#endif
 
     // special buttons
     if (sendpause) 

@@ -46,6 +46,10 @@
 #include "w_main.h"
 #include "am_map.h"
 
+#ifdef DMCP
+#include "dmcp_ops.h"
+#endif
+
 #include "hexen_icon.c"
 
 // MACROS ------------------------------------------------------------------
@@ -680,6 +684,10 @@ void D_DoomMain(void)
         ST_Message("Warp to Map %d (\"%s\":%d), Skill %d\n",
                    WarpMap, P_GetMapName(startmap), startmap, startskill + 1);
     }
+
+#ifdef DMCP
+    DMCP_HexenStart();
+#endif
 
     CheckRecordFrom();
 

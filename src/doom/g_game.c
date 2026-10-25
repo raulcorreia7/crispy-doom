@@ -51,7 +51,7 @@
 #include "d_main.h"
 
 #ifdef DMCP
-#include "engine_hooks.h"
+#include "dmcp_ops.h"
 #endif
 
 #include "wi_stuff.h"
@@ -933,6 +933,10 @@ void G_BuildTiccmd (ticcmd_t* cmd, int maketic)
         cmd->lookfly = look;
     }
     
+#ifdef DMCP
+    DMCP_ApplyInput(cmd, maketic);
+#endif
+
     // special buttons
     // [crispy] suppress pause when a new game is started
     if (sendpause && gameaction != ga_newgame) 
@@ -1661,10 +1665,6 @@ void G_Ticker (void)
 	D_PageTicker (); 
 	break;
     }        
-
-#ifdef DMCP
-    DMCP_Tick();
-#endif
 } 
  
  

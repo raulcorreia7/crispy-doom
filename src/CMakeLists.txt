@@ -166,24 +166,6 @@ if(WIN32)
 	list(APPEND EXTRA_LIBS winmm shlwapi)
 endif()
 
-set(DOOM_EXTRA_LIBS ${EXTRA_LIBS})
-crispy_dmcp_link_libraries(DOOM_EXTRA_LIBS)
-
-function(configure_local_runtime_path target_name)
-    if(APPLE)
-        set(runtime_path "@loader_path")
-    elseif(UNIX)
-        set(runtime_path "\$ORIGIN")
-    else()
-        return()
-    endif()
-
-    set_target_properties("${target_name}" PROPERTIES
-                          BUILD_RPATH "${runtime_path}"
-                          INSTALL_RPATH "${runtime_path}"
-                          INSTALL_RPATH_USE_LINK_PATH FALSE)
-endfunction()
-
 if(WIN32)
     add_executable("${PROGRAM_PREFIX}doom" WIN32 ${SOURCE_FILES_WITH_DEH} "${CMAKE_CURRENT_BINARY_DIR}/doom-res.rc")
 else()
@@ -191,12 +173,8 @@ else()
 endif()
 
 target_include_directories("${PROGRAM_PREFIX}doom" PRIVATE ${GAME_INCLUDE_DIRS})
-target_link_libraries("${PROGRAM_PREFIX}doom" doom ${DOOM_EXTRA_LIBS})
+target_link_libraries("${PROGRAM_PREFIX}doom" doom ${EXTRA_LIBS})
 set_target_properties("${PROGRAM_PREFIX}doom" PROPERTIES COMPILE_FLAGS "${SDL_FLAGS}")
-if(DMCP_ENABLE)
-    configure_local_runtime_path("${PROGRAM_PREFIX}doom")
-    crispy_dmcp_bundle_runtime("${PROGRAM_PREFIX}doom")
-endif()
 
 if(MSVC)
     set_target_properties("${PROGRAM_PREFIX}doom" PROPERTIES
@@ -311,4 +289,17 @@ if (DEFINED EMSCRIPTEN)
     set_target_properties(mus2mid PROPERTIES LINK_FLAGS "-s USE_SDL=2")
 else()
     target_link_libraries(mus2mid SDL2::SDL2)
+endif()
+
+# DMCP: per-game ops + shared host glue, linked statically.
+if(DMCP_ENABLE)
+    cmake_policy(SET CMP0079 NEW)
+    foreach(game doom heretic hexen strife)
+        target_sources("${game}" PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/${game}/dmcp_ops.c")
+        target_compile_definitions("${game}" PRIVATE DMCP)
+        target_link_libraries("${game}" dmcp::dmcp)
+        target_sources("${PROGRAM_PREFIX}${game}" PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/dmcp_host.c")
+        target_compile_definitions("${PROGRAM_PREFIX}${game}" PRIVATE DMCP)
+        target_link_libraries("${PROGRAM_PREFIX}${game}" dmcp::dmcp)
+    endforeach()
 endif()

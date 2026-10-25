@@ -31,6 +31,10 @@
 #include "p_local.h"
 #include "v_video.h"
 
+#ifdef DMCP
+#include "dmcp_ops.h"
+#endif
+
 #define AM_STARTKEY	9
 
 #define MLOOKUNIT 8 // [crispy] for mouselook
@@ -936,6 +940,10 @@ void G_BuildTiccmd(ticcmd_t *cmd, int maketic)
         flyheight += 16;
     }
     cmd->lookfly |= flyheight << 4;
+
+#ifdef DMCP
+    DMCP_ApplyInput(cmd, maketic);
+#endif
 
 //
 // special buttons

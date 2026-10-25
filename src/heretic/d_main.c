@@ -49,6 +49,10 @@
 #include "am_map.h"
 #include "v_trans.h" // [crispy] dp_translation
 
+#ifdef DMCP
+#include "dmcp_ops.h"
+#endif
+
 #include "heretic_icon.c"
 
 #define CT_KEY_GREEN    'g'
@@ -1448,6 +1452,10 @@ void D_DoomMain(void)
     {
         coop_spawns = true;
     }
+
+#ifdef DMCP
+    DMCP_HereticStart();
+#endif
 
     D_CheckRecordFrom();
 

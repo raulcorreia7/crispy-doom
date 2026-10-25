@@ -200,6 +200,9 @@ typedef struct mobj_s
     fixed_t		oldy;
     fixed_t		oldz;
     angle_t		oldangle;
+
+    // [dmcp] Unique id, never reused (see P_NextMobjId).
+    unsigned int	dmcp_id;
 } mobj_t;
 
 // each sector has a degenmobj_t in it's center for sound origin purposes

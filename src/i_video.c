@@ -1026,6 +1026,19 @@ void I_SetPalette (byte *doompalette)
     palette_to_set = true;
 }
 
+// Copies the active palette as 256 RGB triplets.
+void I_GetPaletteRGB(byte *rgb)
+{
+    int i;
+
+    for (i = 0; i < 256; ++i)
+    {
+        rgb[i * 3 + 0] = palette[i].r;
+        rgb[i * 3 + 1] = palette[i].g;
+        rgb[i * 3 + 2] = palette[i].b;
+    }
+}
+
 // Given an RGB value, find the closest matching palette index.
 
 int I_GetPaletteIndex(int r, int g, int b)

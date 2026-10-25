@@ -17,7 +17,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 #include "config.h"
 #include "doomtype.h"
@@ -27,8 +26,6 @@
 #include "i_video.h"
 #include "m_argv.h"
 #include "m_config.h"
-
-#include "SDL.h"
 
 #ifndef DISABLE_SDL2MIXER
 
@@ -592,3 +589,4 @@ void I_BindSoundVariables(void)
     M_BindIntVariable("use_libsamplerate",       &use_libsamplerate);
     M_BindFloatVariable("libsamplerate_scale",   &libsamplerate_scale);
 }
+

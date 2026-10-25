@@ -342,6 +342,9 @@ typedef struct mobj_s
     fixed_t		oldz;
     angle_t		oldangle;
 
+    // [dmcp] Unique id, never reused (see P_NextMobjId).
+    unsigned int	dmcp_id;
+
 } mobj_t;
 
 // haleyjd [STRIFE] Exported

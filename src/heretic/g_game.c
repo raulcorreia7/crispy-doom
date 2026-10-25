@@ -36,6 +36,9 @@
 #include "v_video.h"
 
 #include "deh_main.h" // [crispy] for demo footer
+#ifdef DMCP
+#include "dmcp_ops.h"
+#endif
 #include "memio.h"
 #include "p_extsaveg.h" // [crispy] for extended savegame information
 
@@ -988,6 +991,10 @@ void G_BuildTiccmd(ticcmd_t *cmd, int maketic)
         flyheight += 16;
     }
     cmd->lookfly |= flyheight << 4;
+
+#ifdef DMCP
+    DMCP_ApplyInput(cmd, maketic);
+#endif
 
 //
 // special buttons

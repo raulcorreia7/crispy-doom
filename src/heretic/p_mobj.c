@@ -907,6 +907,15 @@ void P_MobjThinker(thinker_t *thinker)
     }
 }
 
+// [dmcp] Ids for external tools: increase forever, so a stale id never
+// matches a newer mobj, even across level and savegame loads.
+unsigned int P_NextMobjId(void)
+{
+    static unsigned int next_id = 0;
+
+    return ++next_id;
+}
+
 /*
 ===============
 =
@@ -924,6 +933,7 @@ static mobj_t *P_SpawnMobjSafe(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type,
 
     mobj = Z_Malloc(sizeof(*mobj), PU_LEVEL, NULL);
     memset(mobj, 0, sizeof(*mobj));
+    mobj->dmcp_id = P_NextMobjId();
     info = &mobjinfo[type];
     mobj->type = type;
     mobj->info = info;

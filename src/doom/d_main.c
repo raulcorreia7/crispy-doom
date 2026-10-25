@@ -80,7 +80,7 @@
 #include "d_main.h"
 
 #ifdef DMCP
-#include "engine_hooks.h"
+#include "dmcp_ops.h"
 #endif
 
 #include "doom_icon.c"
@@ -549,9 +549,6 @@ void D_RunFrame()
         I_UpdateNoBlit ();
         M_Drawer ();                            // menu is drawn even on top of wipes
         I_FinishUpdate ();                      // page flip or blit buffer
-#ifdef DMCP
-        DMCP_CaptureFrame();
-#endif
         return;
     }
 
@@ -578,9 +575,6 @@ void D_RunFrame()
         } else {
             // normal update
             I_FinishUpdate ();              // page flip or blit buffer
-#ifdef DMCP
-            DMCP_CaptureFrame();
-#endif
         }
     }
 
@@ -1499,9 +1493,7 @@ void D_DoomMain (void)
     int p;
     char file[256];
     char demolumpname[9] = {0};
-#ifdef DMCP
-    dmcp_engine_config_t dmcp_config;
-#endif
+
     // [crispy] unconditionally initialize DEH tables
     DEH_Init();
 
@@ -2449,6 +2441,10 @@ void D_DoomMain (void)
         coop_spawns = true;
     }
 
+#ifdef DMCP
+    DMCP_DoomStart();
+#endif
+
     //!
     // @arg <x>
     // @category demo
@@ -2495,10 +2491,6 @@ void D_DoomMain (void)
 	    D_StartTitle ();                // start up intro loop
     }
 
-#ifdef DMCP
-    dmcp_config = DMCP_ParseArgs(myargc, myargv);
-    DMCP_Init(dmcp_config);
-#endif
-
     D_DoomLoop ();  // never returns
 }
+

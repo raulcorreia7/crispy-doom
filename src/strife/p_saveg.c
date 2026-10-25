@@ -2023,6 +2023,7 @@ void P_UnArchiveThinkers (void)
             saveg_read_pad();
             mobj = Z_Malloc (sizeof(*mobj), PU_LEVEL, NULL);
             saveg_read_mobj_t(mobj);
+            mobj->dmcp_id = P_NextMobjId(); // [dmcp]
 
             // haleyjd 09/29/10: Strife sets the targets of non-allied creatures
             // who had a non-NULL target at save time to players[0].mo so that

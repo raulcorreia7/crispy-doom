@@ -2744,6 +2744,7 @@ static void UnarchiveMobjs(void)
     {
         mobj = MobjList[i];
         StreamIn_mobj_t(mobj);
+        mobj->dmcp_id = P_NextMobjId(); // [dmcp]
 
         // Restore broken pointers.
         mobj->info = &mobjinfo[mobj->type];

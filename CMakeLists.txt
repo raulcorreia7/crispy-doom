@@ -57,16 +57,17 @@ endif()
 
 option(CRISPY_TRUECOLOR "True color rendering" OFF)
 
-set(CRISPY_DMCP_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/third_party/doom-mcp")
-set(CRISPY_DMCP_BUILD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/build/dmcp")
-
-option(DMCP_ENABLE "Enable DMCP (MCP protocol support)" ON)
-option(DMCP_FRAME_CAPTURE "Enable experimental DMCP framebuffer capture" OFF)
-set(DMCP_ROOT "${CRISPY_DMCP_ROOT}" CACHE PATH "Path to DMCP SDK root directory")
-set(DMCP_ADAPTER_DIR "${DMCP_ROOT}/adapters/crispy-doom" CACHE PATH "Path to DMCP Crispy adapter directory")
-set(DMCP_BUILD_DIR "${CRISPY_DMCP_BUILD_DIR}" CACHE PATH "Path to DMCP CMake build directory")
-set(DMCP_LIBRARY_DIR "${DMCP_BUILD_DIR}" CACHE PATH "Directory containing built DMCP libraries")
-include(DMCPIntegration)
+# DMCP: embedded MCP server (third_party/doom-mcp), linked statically into
+# all four games. Needs a C++17 compiler and CMake >= 3.16.
+option(DMCP_ENABLE "Embed the DMCP MCP server" ON)
+if(DMCP_ENABLE AND CMAKE_VERSION VERSION_LESS 3.16)
+    message(WARNING "DMCP needs CMake >= 3.16; building without it")
+    set(DMCP_ENABLE OFF)
+endif()
+if(DMCP_ENABLE)
+    enable_language(CXX)
+    add_subdirectory(third_party/doom-mcp EXCLUDE_FROM_ALL)
+endif()
 
 # Check for libsamplerate.
 find_package(SampleRate)
@@ -87,8 +88,6 @@ if(FluidSynth_FOUND AND ENABLE_SDL2_MIXER)
 endif()
 
 find_package(m)
-
-crispy_dmcp_configure()
 
 include(CheckSymbolExists)
 include(CheckIncludeFile)

@@ -63,6 +63,9 @@ void D_QuitNetGame (void);
 //? how many ticks to run?
 void TryRunTics (void);
 
+// Optional callback run between tics (see d_loop.c).
+extern void (*D_LoopServiceHook)(void);
+
 // Called at start of game loop to initialize timers
 void D_StartGameLoop(void);
 

@@ -1,48 +1,33 @@
 # Crispy Doom Agent Notes
 
-Start the game with DMCP enabled before using an MCP client:
+Start a game with DMCP before using an MCP client:
 
 ```bash
-./go.sh
+./go.sh [doom|heretic|hexen|strife]
 ```
 
-On Windows use:
+On Windows use `.\go.bat`. The server is `http://127.0.0.1:6060/mcp`
+(Streamable HTTP, JSON mode); health is `GET /health`. Use `-dmcp_port <port>`
+for another port.
 
-```bat
-.\go.bat
-```
+`go.sh` and `go.bat` start the game with `-dmcp_allow_cheats`. Without that flag
+the tools that change the game (`change_level`, `spawn`, `give`, `cheat`,
+`teleport`, `damage`, `console`) are not registered. Read the live tool list
+with `tools/list` or `./dmcp-agent tools`; tool arguments are in
+`DMCP-TOOLS.md`.
 
-The release package listens on `http://127.0.0.1:6060/mcp` by default. Use
-`-dmcp_port <port>` if you need a different port.
-Framebuffer capture is compiled out in this release, so screenshot tools are
-not exposed.
+## Python agent
 
-## Python Agent CLI
-
-The package includes the DMCP Python helper under `agents/python`. It uses `uv`
-and talks to the running MCP server.
+`dmcp-agent` needs Python 3.10 or newer and no other packages.
 
 ```bash
-./dmcp-agent --pretty brief
-./dmcp-agent --pretty read enemies --status alive --limit 8
-./dmcp-agent --pretty read items --kind armor --limit 8
-./dmcp-agent spawn DoomImp --x 160 --y 96
-./dmcp-agent give Shotgun --amount 1
-./dmcp-agent weapon 3
-./dmcp-agent input-plan forward --ticks 8
+./dmcp-agent tools
+./dmcp-agent state --sections player --limit 8
+./dmcp-agent input "forward 35; turn_to 90; attack 10; wait"
+./dmcp-agent call spawn '{"things":[{"type":"imp","distance":128}]}'
+./dmcp-agent call give items='[{"name":"Shotgun"}]'
+./dmcp-agent batch calls.json
 ```
 
-On Windows use `.\dmcp-agent.bat`. The helper requires `uv` and Python 3.10 or
-newer; install `uv` from <https://docs.astral.sh/uv/> if the launcher reports it
-is missing. First run may download locked Python dependencies unless they are
-already cached.
-
-Use exact names from `./dmcp-agent --pretty content`. Batch commands use
-canonical DMCP fields only:
-
-```bash
-./dmcp-agent batch --calls-json '[{"name":"give_item","arguments":{"item_class":"Shotgun","amount":1}}]'
-```
-
-`change_level` and `player_input` are direct tools. Use `level`, `input`,
-`weapon`, or `input-plan` rather than putting them in `batch`.
+On Windows use `.\dmcp-agent.bat`. Get type and map names for the running game
+from `./dmcp-agent call list_content`.

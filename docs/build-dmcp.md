@@ -1,16 +1,15 @@
 # Building Crispy Doom with DMCP
 
-This is the current source-build recipe used by the Crispy Doom release workflow.
-The release keeps the layers explicit:
+DMCP is two static libraries (`gmcp`, `dmcp`) from the `third_party/doom-mcp`
+submodule. CMake builds them with the games and links them into
+`crispy-doom`, `crispy-heretic`, `crispy-hexen`, and `crispy-strife`. DMCP needs no
+separate build step.
 
-```text
-Crispy Doom -> Crispy adapter -> Doom MCP -> Generic MCP -> core API/runtime
-```
+## Dependencies
 
-Crispy builds the adapter sources natively, links the DMCP runtime, and packages
-ready-to-use Codex, OpenCode, Claude Code, Pi, and generic MCP config files.
-
-## Build Dependencies
+- CMake 3.16 or newer, git, and a C and C++17 compiler.
+- Network access on the first configure: DMCP downloads yyjson and cpp-httplib
+  into `third_party/doom-mcp/.cache`.
 
 ### Linux (Debian/Ubuntu)
 
@@ -22,15 +21,7 @@ sudo apt-get install -y \
   libfluidsynth-dev libpng-dev libsamplerate0-dev zlib1g-dev
 ```
 
-Verify the development packages are visible before configuring:
-
-```bash
-pkg-config --modversion sdl2 SDL2_net SDL2_mixer fluidsynth libpng samplerate zlib
-```
-
-If CMake reports missing `SDL2::SDL2` or `SDL2::SDL2main`, check that
-`libsdl2-dev` is installed. Runtime-only packages such as `libsdl2-2.0-0` are
-not enough to build Crispy Doom.
+Runtime-only packages such as `libsdl2-2.0-0` are not enough to build.
 
 ### macOS
 
@@ -40,111 +31,80 @@ brew install cmake git pkg-config sdl2 sdl2_net sdl2_mixer fluid-synth libpng li
 
 ### Windows
 
-- Visual Studio with C/C++ build tools
-- CMake
-- Git
-- vcpkg
-- vcpkg packages: `zlib`, `sdl2`, `sdl2-net`, `sdl2-mixer`, `fluidsynth`,
-  `libpng`, `libsamplerate`
+- Visual Studio with C/C++ build tools, CMake, Git
+- vcpkg with `zlib`, `sdl2`, `sdl2-net`, `sdl2-mixer`, `fluidsynth`, `libpng`,
+  `libsamplerate`
 
-## Build DMCP
+## Build
 
-`doom-mcp` is consumed as the pinned `third_party/doom-mcp` submodule. Clone this
-repository with submodules, or initialize them after checkout:
+Clone with submodules, or initialize them after checkout:
 
 ```bash
 git submodule update --init --recursive
 ```
 
-Build the DMCP runtime:
+From the repository root:
 
 ```bash
-cmake -S third_party/doom-mcp -B build/dmcp \
-  -DDMCP_BUILD_SHARED=ON \
-  -DDMCP_BUILD_SINGLE_DLL=ON \
-  -DDMCP_BUILD_EXAMPLES=OFF \
-  -DDMCP_BUILD_ADAPTER_FAKE=OFF \
-  -DDMCP_BUILD_ADAPTER_ZDOOM=OFF \
-  -DDMCP_BUILD_ADAPTER_CRISPY=OFF \
-  -DCMAKE_BUILD_TYPE=Release
-
-cmake --build build/dmcp --config Release --parallel
+cmake -S . -B build -DDMCP_ENABLE=ON -DCMAKE_BUILD_TYPE=Release
+cmake --build build --config Release --parallel \
+  --target crispy-doom crispy-heretic crispy-hexen crispy-strife
 ```
 
-## Build Crispy Doom
+`DMCP_ENABLE` is `ON` by default. With `-DDMCP_ENABLE=OFF` the games build
+without the submodule.
 
-From the `crispy-doom` repository root:
+On Windows, add `-DCMAKE_TOOLCHAIN_FILE=<vcpkg>/scripts/buildsystems/vcpkg.cmake`
+and `-DVCPKG_TARGET_TRIPLET=x64-windows`. The executables are in
+`build/src/Release`.
 
-```bash
-cmake -S . -B build-dmcp \
-  -DDMCP_ENABLE=ON \
-  -DDMCP_FRAME_CAPTURE=OFF \
-  -DDMCP_ROOT="$PWD/third_party/doom-mcp" \
-  -DDMCP_ADAPTER_DIR="$PWD/third_party/doom-mcp/adapters/crispy-doom" \
-  -DDMCP_BUILD_DIR="$PWD/build/dmcp" \
-  -DDMCP_LIBRARY_DIR="$PWD/build/dmcp" \
-  -DCMAKE_BUILD_TYPE=Release
+The binaries are `build/src/crispy-doom`, `crispy-heretic`, `crispy-hexen`,
+and `crispy-strife`.
 
-cmake --build build-dmcp --config Release --parallel
-```
-
-The current CMake integration requires the unified DMCP shared runtime:
-`libdmcp.so` on Linux, `libdmcp.dylib` on macOS, or `dmcp.dll` on Windows.
-Crispy does not link static DMCP archives or ship split DMCP layer libraries.
-
-DMCP framebuffer capture is disabled by default with `DMCP_FRAME_CAPTURE=OFF`.
-With capture disabled, screenshot tools are not exposed and the DMCP
-frame-capture hook is empty.
-
-`DMCP_BUILD_ADAPTER_CRISPY=OFF` is intentional: `crispy-doom` builds the Crispy
-adapter sources directly from `DMCP_ADAPTER_DIR`, so the adapter is native to
-the game binary rather than shipped as a separate adapter library.
-
-The DMCP public boundary is the C API in the `third_party/doom-mcp/include/` headers. C++
-SDK consumers can use the source-stable protocol-name wrappers from
-`third_party/doom-mcp/include/dmcp/doom/protocol.h`.
-
-## Release Packaging
-
-The GitHub release workflow runs for `crispy-doom-v*` tags. It builds
-Linux, macOS, and Windows archives, uploads each archive as a workflow artifact,
-then creates the GitHub release from those downloaded artifacts. Package names
-include the target OS and native build architecture, for example
-`crispy-doom-linux-x86_64.tar.gz`, `crispy-doom-macos-arm64.tar.gz`, and
-`crispy-doom-windows-x86_64.zip`.
-
-Each archive includes:
-
-- `crispy-doom` or `crispy-doom.exe`
-- the DMCP runtime library for the platform
-- `go.sh`/`go.bat`, `dmcp-agent`/`dmcp-agent.bat`, and
-  `download_wad.sh`/`download_wad.bat`
-- `agent-presets/` with Codex, OpenCode, Claude Code, Pi, and generic MCP presets
-- `agents/python/` with the optional Python `dmcp-agent` helper
-- `README.md`, `BUILDING.md`, `AGENTS.md`, and `VERSION.txt`
-
-WAD files are intentionally not bundled.
-
-## SDK Validation
-
-Run this in `doom-mcp` when you need SDK CI coverage without a Crispy binary or
-IWAD:
+## Run
 
 ```bash
-cmake -B build/default -DDMCP_BUILD_TESTS=ON -DDMCP_BUILD_INTEGRATION_TESTS=ON -DDMCP_BUILD_ADAPTER_FAKE=ON
-cmake --build build/default --parallel
-ctest --test-dir build/default -L 'unit|sdk' -LE 'requires_game|e2e' --output-on-failure
-```
-
-Use the Crispy build below for engine-backed verification.
-
-## Verify
-
-Do this only for local human verification, not in CI:
-
-```bash
-./build-dmcp/src/crispy-doom -iwad /path/to/doom.wad
+./build/src/crispy-doom -iwad /path/to/doom.wad
 curl http://127.0.0.1:6060/health
 ```
 
-Use `-dmcp_port <port>` if you need the MCP server on a non-default port.
+Runtime flags: `-nodmcp`, `-dmcp_port N`, `-dmcp_bind ADDR`,
+`-dmcp_allow_cheats`. See `README.DMCP.md`.
+
+## Release packages
+
+`scripts/dmcp-release` builds and packages the archives that the
+`Crispy Doom Release` workflow publishes for `crispy-doom-v*` tags:
+
+```bash
+scripts/dmcp-release/install_deps.sh --platform linux
+scripts/dmcp-release/build.sh --platform linux
+scripts/dmcp-release/package.sh --platform linux \
+  --artifact-name crispy-doom-linux-x86_64 \
+  --asset-name crispy-doom-linux-x86_64.tar.gz
+```
+
+`build.sh` options: `--platform linux|macos|windows` (required),
+`--build-dir DIR` (default `build`), `--build-type TYPE` (default `Release`).
+
+`package.sh` writes `--asset-name` and runs `verify_package.sh` on it. Options:
+`--package-arch`, `--release-tag`, `--build-dir`, `--build-type`,
+`--package-root`. The archive name includes the platform and the native
+architecture, for example `crispy-doom-macos-arm64.tar.gz` or
+`crispy-doom-windows-x86_64.zip`.
+
+Each archive contains the four game executables (and the SDL runtime DLLs on
+Windows), the launchers, the stdlib-only Python agent, MCP client presets,
+`README.md`, `BUILDING.md`, `AGENTS.md`, `DMCP-TOOLS.md`, `VERSION.txt`, and the
+license files (`COPYING.md`, `AUTHORS`, `DMCP-LICENSE`,
+`third-party-licenses/`). WAD files are not bundled.
+
+## DMCP tests
+
+Run in `third_party/doom-mcp` (needs no game or IWAD):
+
+```bash
+cmake -B build -DDMCP_BUILD_TESTS=ON
+cmake --build build --parallel
+ctest --test-dir build --output-on-failure
+```

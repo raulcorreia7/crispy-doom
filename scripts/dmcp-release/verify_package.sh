@@ -8,14 +8,7 @@ IFS=$'\n\t'
 shopt -s nullglob
 
 readonly PROGRAM_NAME="${0##*/}"
-readonly DMCP_RUNTIME_WINDOWS="dmcp.dll"
-readonly DMCP_RUNTIME_LINUX="libdmcp.so"
-readonly DMCP_RUNTIME_MACOS="libdmcp.dylib"
-readonly DMCP_RUNTIME_WINDOWS_GLOB="dmcp*.dll"
-readonly DMCP_RUNTIME_LINUX_GLOB="libdmcp*.so"
-readonly DMCP_RUNTIME_MACOS_GLOB="libdmcp*.dylib"
-readonly LINUX_ORIGIN_RUNPATH='$ORIGIN'
-readonly MACOS_LOADER_PATH='@loader_path'
+readonly GAMES=(doom heretic hexen strife)
 
 artifact_name="${ARTIFACT_NAME:-}"
 asset_name="${ASSET_NAME:-}"
@@ -102,74 +95,22 @@ validate_args() {
   esac
 }
 
-verify_runtime_count() {
-  local root="$1"
-  local expected="$2"
-  shift 2
-
-  local -a runtimes=("$@")
-  [[ ${#runtimes[@]} -eq 1 ]] ||
-    die "expected exactly one DMCP runtime library, found ${#runtimes[@]}"
-  [[ "${runtimes[0]##*/}" == "$expected" ]] ||
-    die "unexpected DMCP runtime library: ${runtimes[0]##*/}"
-  [[ -f "$root/$expected" ]] || die "missing DMCP runtime library: $root/$expected"
-}
-
-verify_linux_runtime_link() {
-  local executable="$1"
-  local root="$2"
-  local dynamic_section
-
-  command -v readelf >/dev/null 2>&1 ||
-    die "readelf is required to verify Linux DMCP linkage"
-
-  dynamic_section="$(readelf -d "$executable")"
-  grep -F "Shared library: [$DMCP_RUNTIME_LINUX]" <<<"$dynamic_section" >/dev/null ||
-    die "crispy-doom does not import $DMCP_RUNTIME_LINUX"
-  grep -F "Library runpath: [$LINUX_ORIGIN_RUNPATH]" <<<"$dynamic_section" >/dev/null ||
-    die "crispy-doom does not use $LINUX_ORIGIN_RUNPATH runpath for bundled libraries"
-
-  if command -v ldd >/dev/null 2>&1; then
-    ldd "$executable" | grep -F "$root/$DMCP_RUNTIME_LINUX" >/dev/null ||
-      die "ldd did not resolve $DMCP_RUNTIME_LINUX from the package directory"
-  fi
-}
-
-verify_macos_runtime_link() {
-  local executable="$1"
-  local load_commands
-  local linked_libraries
-
-  command -v otool >/dev/null 2>&1 ||
-    die "otool is required to verify macOS DMCP linkage"
-
-  linked_libraries="$(otool -L "$executable")"
-  grep -F "$DMCP_RUNTIME_MACOS" <<<"$linked_libraries" >/dev/null ||
-    die "crispy-doom does not import $DMCP_RUNTIME_MACOS"
-
-  load_commands="$(otool -l "$executable")"
-  grep -F "$MACOS_LOADER_PATH" <<<"$load_commands" >/dev/null ||
-    die "crispy-doom does not use $MACOS_LOADER_PATH for bundled libraries"
-}
-
-verify_windows_runtime_link() {
-  local executable="$1"
-
-  if command -v dumpbin >/dev/null 2>&1; then
-    dumpbin //dependents "$executable" | grep -Fi "$DMCP_RUNTIME_WINDOWS" >/dev/null ||
-      die "crispy-doom.exe does not import $DMCP_RUNTIME_WINDOWS"
-  elif command -v objdump >/dev/null 2>&1; then
-    objdump -p "$executable" | grep -Fi "DLL Name: $DMCP_RUNTIME_WINDOWS" >/dev/null ||
-      die "crispy-doom.exe does not import $DMCP_RUNTIME_WINDOWS"
-  fi
-}
-
 verify_unix_script_syntax() {
   local root="$1"
 
   command -v bash >/dev/null 2>&1 ||
     die "bash is required to verify packaged Unix launchers"
   bash -n "$root/go.sh" "$root/download_wad.sh" "$root/dmcp-agent"
+}
+
+verify_agent_runs() {
+  local root="$1"
+  local python=""
+
+  python="$(command -v python3 || command -v python || true)"
+  [[ -n "$python" ]] || return 0
+  PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$root/agents/python" "$python" -m dmcp_agent --help >/dev/null ||
+    die "packaged dmcp_agent does not start with $python"
 }
 
 main() {
@@ -194,6 +135,9 @@ main() {
     "$root/COPYING.md"
     "$root/AUTHORS"
     "$root/DMCP-LICENSE"
+    "$root/DMCP-TOOLS.md"
+    "$root/third-party-licenses/yyjson-LICENSE"
+    "$root/third-party-licenses/cpp-httplib-LICENSE"
     "$root/VERSION.txt"
     "$root/agent-presets/codex/config.toml"
     "$root/agent-presets/opencode/opencode.json"
@@ -202,64 +146,54 @@ main() {
     "$root/agent-presets/pi/mcp.json"
     "$root/agents/python/README.md"
     "$root/agents/python/pyproject.toml"
+    "$root/agents/python/dmcp_agent/__main__.py"
     "$root/agents/python/dmcp_agent/cli.py"
     "$root/agents/python/dmcp_agent/client.py"
-    "$root/agents/python/dmcp_agent/workflows.py"
   )
 
+  local game
+  local windows=0
   if [[ "$platform" == "windows" || "${RUNNER_OS:-}" == "Windows" ]]; then
-    required_files+=(
-      "$root/crispy-doom.exe"
-      "$root/download_wad.bat"
-      "$root/go.bat"
-      "$root/dmcp-agent.bat"
-    )
-    local -a dmcp_runtimes=("$root"/$DMCP_RUNTIME_WINDOWS_GLOB)
-    verify_runtime_count "$root" "$DMCP_RUNTIME_WINDOWS" "${dmcp_runtimes[@]}"
-    verify_windows_runtime_link "$root/crispy-doom.exe"
+    windows=1
+    required_files+=("$root/download_wad.bat" "$root/go.bat" "$root/dmcp-agent.bat")
+    for game in "${GAMES[@]}"; do
+      required_files+=("$root/crispy-$game.exe")
+    done
   else
-    required_files+=("$root/crispy-doom" "$root/download_wad.sh" "$root/go.sh" "$root/dmcp-agent")
-    if [[ "$platform" == "macos" ]]; then
-      local -a dmcp_runtimes=("$root"/$DMCP_RUNTIME_MACOS_GLOB)
-      verify_runtime_count "$root" "$DMCP_RUNTIME_MACOS" "${dmcp_runtimes[@]}"
-      verify_macos_runtime_link "$root/crispy-doom"
-    else
-      local -a dmcp_runtimes=("$root"/$DMCP_RUNTIME_LINUX_GLOB)
-      verify_runtime_count "$root" "$DMCP_RUNTIME_LINUX" "${dmcp_runtimes[@]}"
-      verify_linux_runtime_link "$root/crispy-doom" "$root"
-    fi
+    required_files+=("$root/download_wad.sh" "$root/go.sh" "$root/dmcp-agent")
+    for game in "${GAMES[@]}"; do
+      required_files+=("$root/crispy-$game")
+    done
   fi
 
   for file in "${required_files[@]}"; do
     [[ -f "$file" ]] || die "missing package file: $file"
   done
 
-  [[ -d "$root/agent-presets" ]] || die "missing package directory: agent-presets"
-  [[ -d "$root/agents/python" ]] || die "missing package directory: agents/python"
-
   [[ ! -e "$root/.codex" ]] || die "release package must use agent-presets/codex, not root .codex"
   [[ ! -e "$root/.mcp.json" ]] || die "release package must use agent-presets/claude, not root .mcp.json"
   [[ ! -e "$root/opencode.json" ]] || die "release package must use agent-presets/opencode, not root opencode.json"
   [[ ! -e "$root/mcp.json" ]] || die "release package must use agent-presets/generic, not root mcp.json"
 
-  grep -F 'dmcp-agent = "dmcp_agent.cli:main"' "$root/agents/python/pyproject.toml" >/dev/null ||
-    die "Python agent package is missing the dmcp-agent entry point"
-  grep -F 'package-root `dmcp-agent`' "$root/agents/python/README.md" >/dev/null ||
-    die "Python agent README must use release-package paths"
-
-  if find "$root" -type f -iname '*.wad' -print -quit | grep -q .; then
-    die "release package must not bundle WAD files"
+  if find "$root" -type f \( -iname '*.wad' -o -iname '*dmcp*.dll' -o -iname 'libdmcp*' \) \
+      -print -quit | grep -q .; then
+    die "release package must not bundle WAD files or a DMCP shared library"
   fi
 
-  if find "$root/agents/python" -type d \( -name '.venv' -o -name '__pycache__' \) \
+  if find "$root/agents" -type d \( -name '.venv' -o -name '__pycache__' \) \
       -print -quit | grep -q .; then
     die "release package must not bundle Python virtualenvs or bytecode caches"
   fi
 
-  if [[ "$platform" != "windows" && "${RUNNER_OS:-}" != "Windows" ]]; then
+  if [[ "$windows" -eq 0 ]]; then
+    for game in "${GAMES[@]}"; do
+      [[ -x "$root/crispy-$game" ]] || die "crispy-$game must be executable"
+    done
     [[ -x "$root/dmcp-agent" ]] || die "dmcp-agent launcher must be executable"
     verify_unix_script_syntax "$root"
   fi
+
+  verify_agent_runs "$root"
 }
 
 main "$@"

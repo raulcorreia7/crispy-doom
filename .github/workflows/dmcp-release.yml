@@ -6,10 +6,6 @@ on:
       - 'crispy-doom-v*'
   workflow_dispatch:
 
-env:
-  DMCP_DIR: third_party/doom-mcp
-  DMCP_BUILD_DIR: build/dmcp
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
@@ -56,13 +52,9 @@ jobs:
         shell: bash
         run: scripts/dmcp-release/install_deps.sh --platform "${{ matrix.platform }}"
 
-      - name: Build DMCP and Crispy Doom
+      - name: Build games with DMCP
         shell: bash
-        run: >
-          scripts/dmcp-release/build.sh
-          --platform "${{ matrix.platform }}"
-          --dmcp-dir "${{ env.DMCP_DIR }}"
-          --dmcp-build-dir "${{ env.DMCP_BUILD_DIR }}"
+        run: scripts/dmcp-release/build.sh --platform "${{ matrix.platform }}"
 
       - name: Package and verify
         shell: bash
@@ -73,7 +65,6 @@ jobs:
           --artifact-name "${{ matrix.artifact_name }}"
           --asset-name "${{ matrix.asset_name }}"
           --release-tag "${{ github.ref_name }}"
-          --dmcp-dir "${{ env.DMCP_DIR }}"
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v7

@@ -1,15 +1,13 @@
 # Crispy Doom with DMCP
 
-This is a Crispy Doom package with DMCP support. It lets you play Doom normally
-and, at the same time, let an AI assistant inspect or control the running game
-through MCP.
+Crispy Doom, Crispy Heretic, Crispy Hexen, and Crispy Strife with an embedded
+MCP server. Play normally while an AI assistant reads the game state and
+controls the player through [MCP](https://modelcontextprotocol.io).
 
-DMCP runs locally at `http://127.0.0.1:6060/mcp` by default. For Codex,
-OpenCode, Claude Code, Pi, and similar tools, use the bundled `dmcp-agent`
-helper first. It is easier for models to use than raw MCP because it returns
-compact, structured output and hides verbose schemas.
+The server listens on `http://127.0.0.1:6060/mcp` (Streamable HTTP, JSON mode)
+and accepts connections from your machine only.
 
-## Quick Start
+## Quick start
 
 Linux:
 
@@ -35,175 +33,126 @@ cd crispy-doom-windows-x86_64
 .\go.bat
 ```
 
-`go.sh` / `go.bat` starts the game. If `doom1.wad` is missing, it downloads the
-checksum-verified Doom shareware IWAD. You can also set `DOOM_WAD` or pass
-`-iwad` to use your own IWAD.
-
-Keep the game running. Open a second terminal in the extracted package folder
-for AI interaction.
-
-## For Players
-
-Recommended path:
+Check the server from a second terminal:
 
 ```bash
-./dmcp-agent --pretty brief
-./dmcp-agent --pretty content enemies
-./dmcp-agent --pretty read player
-./dmcp-agent --pretty read enemies --status alive --limit 8
+curl http://127.0.0.1:6060/health
 ```
 
-Once a level is loaded, try controlled actions:
+## Launchers
+
+`go.sh [doom|heretic|hexen|strife] [args...]` (`go.bat` on Windows) starts a
+game, `doom` by default. It passes `-dmcp_allow_cheats` (see
+[Flags](#flags)) and forwards every other argument.
+
+- Doom: uses `-iwad` if you pass it, else `DOOM_WAD`, else `./doom1.wad`. A
+  missing `doom1.wad` is downloaded as the checksum-verified shareware IWAD.
+- Heretic, Hexen, Strife: use `-iwad` or `DOOM_WAD` if set, else the IWAD search
+  of the engine. The package contains no WAD files.
+
+To start without cheat tools, run `./crispy-doom` (or `crispy-heretic`,
+`crispy-hexen`, `crispy-strife`) directly.
+
+## Flags
+
+| Flag or variable | Meaning |
+|---|---|
+| `-nodmcp` | Do not start the server. |
+| `-dmcp_port N` | Listen on port `N` (default `6060`). |
+| `-dmcp_bind ADDR` | Listen on `ADDR` (default `127.0.0.1`). |
+| `-dmcp_allow_cheats` | Register the tools that change the game. Without it they do not exist. |
+| `DMCP_BIND_ADDRESS` | Same as `-dmcp_bind`. |
+| `DMCP_ALLOWED_ORIGIN` | Browser `Origin` the server accepts besides loopback origins. |
+
+Anyone who can reach the port can control the game. Bind to a non-loopback
+address only on a network you trust.
+
+## Connect an MCP client
+
+Claude Code:
 
 ```bash
-./dmcp-agent spawn DoomImp --x 160 --y 96
-./dmcp-agent give Shotgun --amount 1
-./dmcp-agent give-many --items-json '[{"item_class":"Shotgun","amount":1},{"item_class":"Shells","amount":20}]'
-./dmcp-agent weapon 3
-./dmcp-agent input-plan forward --ticks 8
-./dmcp-agent level E1M2 --skill-level 3
+claude mcp add --transport http doom http://127.0.0.1:6060/mcp
 ```
 
-On Windows, use `.\dmcp-agent.bat` instead of `./dmcp-agent`.
-
-The helper requires `uv` and Python 3.10 or newer. Install `uv` from
-<https://docs.astral.sh/uv/> if the launcher reports it is missing. First run
-may download locked Python dependencies unless they are already cached.
-
-## Agent CLI
-
-Use `dmcp-agent` when you are asking a coding or chat agent to play with the
-game. It keeps commands stable and compact:
-
-```bash
-./dmcp-agent --pretty brief
-./dmcp-agent --pretty content
-./dmcp-agent --pretty tools --compact
-./dmcp-agent --pretty shell
-```
-
-Useful commands:
-
-- `brief`: compact game state, available content, and agent rules.
-- `content`: available enemies, items, weapons, ammo, keys, maps, and giveable
-  objects for the current game mode.
-- `read`: granular reads such as `player`, `map`, `game`, `enemies`,
-  `entities`, `items`, and `inventory`.
-- `spawn`, `spawn-many`: spawn available entities.
-- `give`, `give-many`: give available items, weapons, ammo, keys, or armor.
-- `level`: change level after content validation.
-- `weapon`, `input`, `input-plan`: control player input.
-- `shell`: keep one MCP connection open for repeated commands.
-
-Weapon slots follow Doom controls: `1` Fist/Chainsaw, `2` Pistol, `3`
-Shotgun/SuperShotgun, `4` Chaingun, `5` RocketLauncher, `6` PlasmaRifle, `7`
-BFG9000.
-
-More examples are in `agents/python/README.md`.
-
-## Code Editors and MCP Clients
-
-Use raw MCP config when your preferred editor or agent client supports MCP
-directly. This package includes copy-ready presets:
+Other clients: copy or merge a preset from `agent-presets/` into the client
+configuration.
 
 - Codex: `agent-presets/codex/config.toml`
 - OpenCode: `agent-presets/opencode/opencode.json`
 - Claude Code: `agent-presets/claude/mcp.json`
 - Pi: `agent-presets/pi/mcp.json`
-- Generic MCP clients: `agent-presets/generic/mcp.json`
+- Other clients: `agent-presets/generic/mcp.json`
 
-All presets point to the local server:
+All presets point to `http://127.0.0.1:6060/mcp`. Start the game first, then
+the client.
 
-```text
-http://127.0.0.1:6060/mcp
-```
+## Tools
 
-Minimal Codex config:
+| Tool | Purpose |
+|---|---|
+| `get_state` | Game, level, player, and nearby entities. |
+| `list_content` | Maps, thing types, and cheat names of the running game. |
+| `screenshot` | Frame as PNG, JPEG, or ASCII art. |
+| `wait` | Wait a number of tics. |
+| `input` | Move, turn, aim, attack, use, and switch weapon as a step plan. |
+| `batch` | Run several tool calls in one frame. |
 
-```toml
-[mcp_servers.doom]
-url = "http://127.0.0.1:6060/mcp"
-enabled = true
-```
+These tools need `-dmcp_allow_cheats`:
 
-Minimal MCP JSON config:
+| Tool | Purpose |
+|---|---|
+| `change_level` | Warp to a map. |
+| `spawn` | Spawn things. |
+| `give` | Give items, weapons, ammo, keys. |
+| `cheat` | God mode, noclip, all weapons, and similar. |
+| `teleport` | Move the player. |
+| `damage` | Damage or kill an entity. |
+| `console` | Send a cheat code string. |
 
-```json
-{
-  "mcpServers": {
-    "doom": {
-      "type": "http",
-      "url": "http://127.0.0.1:6060/mcp"
-    }
-  }
-}
-```
+A tool is also absent when the game does not support it. Arguments, results,
+and units are in `DMCP-TOOLS.md` (in the repository:
+`third_party/doom-mcp/docs/design/v1-tools.md`).
 
-Copy or merge the matching preset into your MCP client configuration when you
-want direct MCP access. The package does not auto-enable editor configs from the
-extracted folder. Use raw MCP for custom clients, debugging, or tools not
-exposed by the helper. For normal agent gameplay, prefer `dmcp-agent`.
+## Python agent
 
-## For Developers
-
-Package layout:
-
-- `crispy-doom` / `crispy-doom.exe`: game executable.
-- `libdmcp.so`, `libdmcp.dylib`, or `dmcp.dll`: bundled DMCP shared runtime.
-- `go.sh` / `go.bat`: start the game with a default IWAD.
-- `dmcp-agent` / `dmcp-agent.bat`: run the Python agent helper from package root.
-- `agents/python/`: helper source and `uv.lock`.
-- `agent-presets/`: raw MCP config files for common clients.
-- `BUILDING.md`: source build notes for this fork.
-- `AGENTS.md`: concise agent-oriented usage notes.
-- `COPYING.md`, `AUTHORS`: license and attribution files.
-
-Useful checks:
+`dmcp-agent` (`dmcp-agent.bat` on Windows) is a small command-line client for
+the server. It needs Python 3.10 or newer and no other packages.
 
 ```bash
-curl http://127.0.0.1:6060/health
-./dmcp-agent --pretty tools --compact
-./dmcp-agent --pretty content
+./dmcp-agent health
+./dmcp-agent tools                      # names and one-line descriptions
+./dmcp-agent tools screenshot           # input schema of one tool
+./dmcp-agent state --sections player --limit 8
+./dmcp-agent shot --format ascii --width 100
+./dmcp-agent input "forward 35; turn_to 90; attack 10; wait"
+./dmcp-agent call give items='[{"name":"Shotgun"}]'
+./dmcp-agent shell                      # one MCP session, many commands
 ```
 
-The game integration uses a single shared DMCP runtime and a thin Crispy adapter:
+Options: `--url URL` (env `DMCP_URL`) and `--timeout SECONDS` before the
+command; `--pretty` and `--out PATH` after it. More in `agents/python/README.md`, or run
+`./dmcp-agent --help`.
 
-```text
-Crispy Doom -> Crispy adapter -> Doom MCP -> Generic MCP -> core API/runtime
-```
+## Package contents
 
-The boundary from Crispy into DMCP is C-compatible. C++ SDK consumers can use
-the source-stable protocol wrappers from the `doom-mcp` SDK.
+- `crispy-doom`, `crispy-heretic`, `crispy-hexen`, `crispy-strife`
+  (`.exe` on Windows; with the SDL runtime DLLs).
+- `go.sh` / `go.bat`, `download_wad.sh` / `download_wad.bat`,
+  `dmcp-agent` / `dmcp-agent.bat`.
+- `agents/python/`: the Python agent source.
+- `agent-presets/`: MCP client configuration files.
+- `AGENTS.md`: usage notes for AI agents.
+- `DMCP-TOOLS.md`: the tool contract.
+- `BUILDING.md`: build from source.
+- `VERSION.txt`, `COPYING.md`, `AUTHORS`, `DMCP-LICENSE` (MIT),
+  `third-party-licenses/`.
 
-## Runtime Dependencies
+## Runtime dependencies
 
-- Linux packages expect SDL2, SDL2_net, SDL2_mixer, FluidSynth, libpng,
-  libsamplerate, and zlib runtime libraries from the system package manager. On
-  Debian/Ubuntu:
-  `sudo apt-get install libsdl2-2.0-0 libsdl2-net-2.0-0 libsdl2-mixer-2.0-0 libfluidsynth3 libpng16-16 libsamplerate0 zlib1g`.
-- macOS packages expect the same runtime libraries from Homebrew when they are
-  not already available:
-  `brew install sdl2 sdl2_net sdl2_mixer fluid-synth libpng libsamplerate`.
-- Unix WAD download uses `curl` or `wget`, `tar` for the fallback archive, and
-  `sha256sum` or `shasum` for checksum verification.
-- The agent helper requires `uv` and Python 3.10 or newer:
-  <https://docs.astral.sh/uv/>. First run may download locked Python
-  dependencies unless the `uv` cache is already warm.
-
-## Notes
-
-- Pass `-dmcp_port 6061` to use a different MCP port.
-- DMCP listens on `127.0.0.1` only. Set `DMCP_BIND_ADDRESS=0.0.0.0` to accept
-  connections from other machines; anyone who can reach the port can then
-  control the game.
-- Spawn, give, health and console tools need `-dmcp_allow_cheats`. `go.sh` and
-  `go.bat` pass it for you; add it yourself when you start `crispy-doom`
-  directly.
-- DMCP is MIT licensed; see `DMCP-LICENSE` in the package.
-- DMCP framebuffer capture is compiled out in release builds for now, so
-  screenshot tools are not exposed.
-- DMCP does not require a global config file in this fork. Runtime behavior is
-  controlled by command-line flags; MCP client files in `agent-presets/` are
-  templates to copy or merge into your preferred client.
-- Release archives do not bundle WAD files. The included downloader verifies
-  the expected SHA256 for the shareware `doom1.wad`.
+- Linux: SDL2, SDL2_net, SDL2_mixer, FluidSynth, libpng, libsamplerate, zlib.
+  On Debian or Ubuntu:
+  `sudo apt-get install libsdl2-2.0-0 libsdl2-net-2.0-0 libsdl2-mixer-2.0-0 libfluidsynth3 libpng16-16 libsamplerate0 zlib1g`
+- macOS: `brew install sdl2 sdl2_net sdl2_mixer fluid-synth libpng libsamplerate`
+- Windows: none; the DLLs are in the package.
+- `download_wad.sh` needs `curl` or `wget`, and `sha256sum` or `shasum`.

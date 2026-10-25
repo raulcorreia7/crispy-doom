@@ -11,18 +11,14 @@ readonly PROGRAM_NAME="${0##*/}"
 readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 readonly PAYLOAD_DIR="$SCRIPT_DIR/payload"
-readonly CRISPY_EXECUTABLE_WINDOWS="crispy-doom.exe"
-readonly CRISPY_EXECUTABLE_UNIX="crispy-doom"
-readonly DMCP_RUNTIME_WINDOWS="dmcp.dll"
-readonly DMCP_RUNTIME_LINUX="libdmcp.so"
-readonly DMCP_RUNTIME_MACOS="libdmcp.dylib"
+readonly GAMES=(doom heretic hexen strife)
 
 platform=""
 package_arch="${PACKAGE_ARCH:-}"
 artifact_name="${ARTIFACT_NAME:-}"
 asset_name="${ASSET_NAME:-}"
 release_tag="${RELEASE_TAG:-}"
-dmcp_dir="${DMCP_DIR:-third_party/doom-mcp}"
+readonly DMCP_DIR="$REPO_ROOT/third_party/doom-mcp"
 build_dir="${CRISPY_BUILD_DIR:-build}"
 build_type="${BUILD_TYPE:-Release}"
 package_root="${PACKAGE_ROOT:-build/dmcp-release/pkg}"
@@ -33,7 +29,8 @@ usage() {
 Usage:
   $PROGRAM_NAME --platform linux|macos|windows --artifact-name NAME --asset-name FILE [OPTIONS]
 
-Assemble and verify the Crispy Doom release artifact with DMCP support.
+Assemble and verify the Crispy Doom release artifact with DMCP support. Run
+build.sh first.
 
 Options:
       --platform NAME       Target platform: linux, macos, or windows.
@@ -41,7 +38,6 @@ Options:
       --artifact-name NAME  Directory name inside the archive.
       --asset-name FILE     Archive file to write.
       --release-tag TAG     Release tag to write into VERSION.txt.
-      --dmcp-dir DIR        doom-mcp submodule directory (default: third_party/doom-mcp).
       --build-dir DIR       Crispy Doom CMake build directory (default: build).
       --build-type TYPE     CMake build type (default: Release).
       --package-root DIR    Temporary package root (default: build/dmcp-release/pkg).
@@ -120,11 +116,6 @@ parse_args() {
         release_tag="$2"
         shift 2
         ;;
-      --dmcp-dir)
-        [[ "${2:-}" ]] || die_usage "$1 requires DIR"
-        dmcp_dir="$2"
-        shift 2
-        ;;
       --build-dir)
         [[ "${2:-}" ]] || die_usage "$1 requires DIR"
         build_dir="$2"
@@ -177,7 +168,6 @@ validate_args() {
   fi
   [[ -n "$artifact_name" ]] || die_usage "--artifact-name is required"
   [[ -n "$asset_name" ]] || die_usage "--asset-name is required"
-  dmcp_dir="$(abs_path "$dmcp_dir")"
   build_dir="$(abs_path "$build_dir")"
   package_root="$(abs_path "$package_root")"
   asset_name="$(abs_path "$asset_name")"
@@ -232,32 +222,39 @@ git_commit() {
   fi
 }
 
-copy_game_binary() {
+copy_game_binaries() {
+  local game
+
   if is_windows; then
-    copy_file "$build_dir/src/$build_type/$CRISPY_EXECUTABLE_WINDOWS" \
-      "$artifact_dir/$CRISPY_EXECUTABLE_WINDOWS"
-    local engine_dlls=("$build_dir"/src/"$build_type"/*.dll)
-    if [[ ${#engine_dlls[@]} -gt 0 ]]; then
-      cp "${engine_dlls[@]}" "$artifact_dir/"
+    for game in "${GAMES[@]}"; do
+      copy_file "$build_dir/src/$build_type/crispy-$game.exe" "$artifact_dir/crispy-$game.exe"
+    done
+    # SDL and other runtime DLLs that vcpkg places next to the executables.
+    local runtime_dlls=("$build_dir"/src/"$build_type"/*.dll)
+    if [[ ${#runtime_dlls[@]} -gt 0 ]]; then
+      cp "${runtime_dlls[@]}" "$artifact_dir/"
     fi
     return
   fi
 
-  copy_file "$build_dir/src/$CRISPY_EXECUTABLE_UNIX" "$artifact_dir/$CRISPY_EXECUTABLE_UNIX"
+  for game in "${GAMES[@]}"; do
+    copy_file "$build_dir/src/crispy-$game" "$artifact_dir/crispy-$game"
+    chmod +x "$artifact_dir/crispy-$game"
+  done
 }
 
-copy_dmcp_runtime() {
-  if is_windows; then
-    copy_file "$build_dir/src/$build_type/$DMCP_RUNTIME_WINDOWS" \
-      "$artifact_dir/$DMCP_RUNTIME_WINDOWS"
-    return
-  fi
+# DMCP links yyjson and cpp-httplib statically; ship their license texts.
+copy_third_party_licenses() {
+  local cache="${CPM_SOURCE_CACHE:-$DMCP_DIR/.cache}"
+  local dep
+  local license
 
-  if [[ "$platform" == "macos" ]]; then
-    copy_file "$build_dir/src/$DMCP_RUNTIME_MACOS" "$artifact_dir/$DMCP_RUNTIME_MACOS"
-  else
-    copy_file "$build_dir/src/$DMCP_RUNTIME_LINUX" "$artifact_dir/$DMCP_RUNTIME_LINUX"
-  fi
+  mkdir -p "$artifact_dir/third-party-licenses"
+  for dep in yyjson cpp-httplib; do
+    license="$(find "$cache/$dep" -maxdepth 2 -name LICENSE -print -quit 2>/dev/null || true)"
+    [[ -n "$license" ]] || die "license for $dep not found under $cache/$dep"
+    cp "$license" "$artifact_dir/third-party-licenses/$dep-LICENSE"
+  done
 }
 
 copy_release_files() {
@@ -276,26 +273,28 @@ copy_release_files() {
   copy_file "$REPO_ROOT/docs/build-dmcp.md" "$artifact_dir/BUILDING.md"
   copy_file "$REPO_ROOT/COPYING.md" "$artifact_dir/COPYING.md"
   copy_file "$REPO_ROOT/AUTHORS" "$artifact_dir/AUTHORS"
-  copy_file "$dmcp_dir/LICENSE" "$artifact_dir/DMCP-LICENSE"
+  copy_file "$DMCP_DIR/LICENSE" "$artifact_dir/DMCP-LICENSE"
+  copy_file "$DMCP_DIR/docs/design/v1-tools.md" "$artifact_dir/DMCP-TOOLS.md"
+  copy_third_party_licenses
   copy_tree_contents "$PAYLOAD_DIR" "$artifact_dir"
-  copy_required_dir "$dmcp_dir/examples/agents/python" "$artifact_dir/agents/python"
-  copy_file "$REPO_ROOT/scripts/dmcp-release/agent-python-README.md" \
-    "$artifact_dir/agents/python/README.md"
-  rm -rf "$artifact_dir/agents/python/.venv" \
-         "$artifact_dir/agents/python/__pycache__" \
-         "$artifact_dir/agents/python/dmcp_agent/__pycache__"
+
+  local agent_src="$DMCP_DIR/examples/agents/python"
+  copy_required_dir "$agent_src/dmcp_agent" "$artifact_dir/agents/python/dmcp_agent"
+  copy_file "$agent_src/README.md" "$artifact_dir/agents/python/README.md"
+  copy_file "$agent_src/pyproject.toml" "$artifact_dir/agents/python/pyproject.toml"
+  find "$artifact_dir/agents" -name __pycache__ -type d -prune -exec rm -rf {} +
 
   {
     printf 'release_tag=%s\n' "${release_tag:-unknown}"
     printf 'platform=%s\n' "${platform:-${RUNNER_OS:-unknown}}"
     printf 'architecture=%s\n' "$package_arch"
     printf 'crispy_commit=%s\n' "$(git_commit "$REPO_ROOT")"
-    printf 'dmcp_commit=%s\n' "$(git_commit "$dmcp_dir")"
+    printf 'dmcp_commit=%s\n' "$(git_commit "$DMCP_DIR")"
   } >"$artifact_dir/VERSION.txt"
 }
 
 create_archive() {
-  mkdir -p "$package_root"
+  mkdir -p "$package_root" "$(dirname "$asset_name")"
   if is_windows; then
     (cd "$package_root" && 7z a "$asset_name" "$artifact_name")
     return
@@ -309,8 +308,7 @@ main() {
   rm -rf "$artifact_dir" "$asset_name"
   mkdir -p "$artifact_dir"
 
-  copy_game_binary
-  copy_dmcp_runtime
+  copy_game_binaries
   copy_release_files
   create_archive
 

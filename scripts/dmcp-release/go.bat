@@ -1,5 +1,5 @@
 @echo off
-REM go.bat - Run Crispy Doom with a default IWAD
+REM go.bat - Run a Crispy game with DMCP and a default IWAD
 
 setlocal
 set "SCRIPT_DIR=%~dp0"
@@ -8,17 +8,33 @@ cd /d "%SCRIPT_DIR%"
 if /I "%~1"=="-h" goto help
 if /I "%~1"=="--help" goto help
 
-if not exist "crispy-doom.exe" (
-    echo error: crispy-doom.exe not found in %SCRIPT_DIR%
+set "GAME=doom"
+for %%G in (doom heretic hexen strife) do if /I "%~1"=="%%G" set "GAME=%%G"
+if /I "%~1"=="%GAME%" shift
+
+REM %* ignores shift, so collect the remaining arguments by hand.
+set "ARGS="
+:collect
+if "%~1"=="" goto collected
+set "ARGS=%ARGS% %1"
+shift
+goto collect
+:collected
+
+set "EXE=crispy-%GAME%.exe"
+if not exist "%EXE%" (
+    echo error: %EXE% not found in %SCRIPT_DIR%
     exit /b 1
 )
 
 set "HAS_IWAD="
-for %%A in (%*) do (
+for %%A in (%ARGS%) do (
     if /I "%%~A"=="-iwad" set "HAS_IWAD=1"
 )
 
 if defined HAS_IWAD goto run
+
+if /I not "%GAME%"=="doom" if "%DOOM_WAD%"=="" goto run
 
 if "%DOOM_WAD%"=="" set "DOOM_WAD=.\doom1.wad"
 
@@ -31,21 +47,25 @@ if not exist "%DOOM_WAD%" (
     exit /b 1
 )
 
-crispy-doom.exe -iwad "%DOOM_WAD%" -dmcp_allow_cheats %*
+"%EXE%" -iwad "%DOOM_WAD%" -dmcp_allow_cheats%ARGS%
 exit /b %ERRORLEVEL%
 
 :run
-crispy-doom.exe -dmcp_allow_cheats %*
+"%EXE%" -dmcp_allow_cheats%ARGS%
 exit /b %ERRORLEVEL%
 
 :help
-echo Run crispy-doom from the extracted Crispy Doom release folder.
+echo Run a Crispy game from the extracted Crispy Doom release folder.
 echo.
 echo Usage:
-echo   go.bat [extra args...]
+echo   go.bat [doom^|heretic^|hexen^|strife] [extra args...]
 echo.
 echo Notes:
+echo   - The game defaults to doom.
+echo   - Passes -dmcp_allow_cheats so the mutating DMCP tools are available. Run
+echo     crispy-GAME.exe directly to start without them.
 echo   - If you pass -iwad yourself, go.bat forwards args untouched.
-echo   - Otherwise it uses DOOM_WAD or .\doom1.wad.
-echo   - If .\doom1.wad is missing, it downloads the shareware IWAD first.
+echo   - Otherwise it uses DOOM_WAD or, for doom, .\doom1.wad (downloaded as the
+echo     shareware IWAD when missing). For the other games, DOOM_WAD or the IWAD
+echo     search of the engine applies.
 exit /b 0

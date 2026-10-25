@@ -80,6 +80,7 @@ install_linux() {
   sudo apt-get update
   sudo apt-get install -y \
     build-essential \
+    git \
     cmake \
     pkg-config \
     libsdl2-dev \
